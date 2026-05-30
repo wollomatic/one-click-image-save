@@ -11,6 +11,7 @@ const DEFAULTS = {
 const MENU_ID_SAVE = "one-click-image-save";
 const LEGACY_MENU_IDS = ["one-click-image-save-and-close"];
 const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite"]);
+const IMAGE_EXTENSIONS = new Set(["avif", "bmp", "gif", "jpg", "jpeg", "png", "svg", "webp", "tif", "tiff"]);
 let menuSetup = Promise.resolve();
 
 browser.runtime.onInstalled.addListener(() => initialize());
@@ -65,6 +66,10 @@ function createContextMenu() {
 }
 
 async function saveImage(srcUrl, options) {
+  if (!isAllowedImageUrl(srcUrl)) {
+    throw new Error(`Unsupported image URL scheme: ${safeUrlForLog(srcUrl)}`);
+  }
+
   const filename = buildDownloadFilename(srcUrl, options);
 
   await browser.downloads.download({
@@ -73,6 +78,24 @@ async function saveImage(srcUrl, options) {
     saveAs: false,
     conflictAction: options.conflictAction
   });
+}
+
+function isAllowedImageUrl(srcUrl) {
+  try {
+    const url = new URL(srcUrl);
+
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return true;
+    }
+
+    return url.protocol === "data:" && /^data:image\//i.test(srcUrl);
+  } catch {
+    return false;
+  }
+}
+
+function safeUrlForLog(srcUrl) {
+  return String(srcUrl).slice(0, 120).replace(/[\u0000-\u001f\u007f]/g, "");
 }
 
 async function closeTab(tabId) {
@@ -126,6 +149,12 @@ function buildDownloadFilename(srcUrl, options) {
 function getOriginalFilename(srcUrl) {
   try {
     const url = new URL(srcUrl);
+    const dataImageExtension = extensionFromDataImageUrl(srcUrl);
+
+    if (dataImageExtension) {
+      return `image-${timestamp()}.${dataImageExtension}`;
+    }
+
     const lastSegment = decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() || "");
     const candidate = lastSegment || "image";
 
@@ -146,16 +175,41 @@ function hasUsefulExtension(filename) {
 
 function extensionFromMimeLikeUrl(url) {
   const format = url.searchParams.get("format") || url.searchParams.get("fm");
-  if (format && /^[a-z0-9]{2,5}$/i.test(format)) {
-    return format.toLowerCase().replace("jpeg", "jpg");
+  const extension = normalizeImageExtension(format);
+
+  if (extension) {
+    return extension;
   }
+
   return null;
+}
+
+function extensionFromDataImageUrl(srcUrl) {
+  const match = String(srcUrl).match(/^data:image\/([a-z0-9.+-]+)[;,]/i);
+  const subtype = match?.[1]?.replace(/\+xml$/i, "");
+
+  return normalizeImageExtension(subtype);
+}
+
+function normalizeImageExtension(extension) {
+  if (!extension || !/^[a-z0-9]{2,5}$/i.test(extension)) {
+    return null;
+  }
+
+  const normalized = extension.toLowerCase();
+
+  if (!IMAGE_EXTENSIONS.has(normalized)) {
+    return null;
+  }
+
+  return normalized;
 }
 
 function sanitizeFilename(filename) {
   const clean = filename
     .replace(/[\\/:*?"<>|]/g, "_")
     .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g, "")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/^\.+$/, "image");
