@@ -1,37 +1,22 @@
 # One Click Image Save
 
-A small Firefox WebExtension that adds a right-click menu entry for images and saves them without asking into a configured folder inside the Firefox downloads directory.
+A lightweight Firefox extension that adds a **Save image** entry to the image context menu and downloads images instantly without showing the file picker.
 
 ## Features
 
-- Right-click an image and choose **Save image**
-- Saves without a file picker dialog
-- Optional setting to close the current tab after the download starts
-- Configurable target subfolder, for example `Saved Images`
-- Optional website domain subfolder, with complete-hostname mode
-- Optional timestamp or domain name prefix
-- Configurable conflict behavior:
-  - create unique filename
-  - overwrite
-- Works without a backend and without Native Messaging
+- No tracking, no telemetry, no ads
+- Right-click an image and select *Save image*
+- Downloads start immediately without a save dialog
+- Configurable target folder inside your Firefox downloads directory
+- Optional website-specific subfolders
+- Optional filename prefixes based on timestamp or website domain
+- Optional automatic tab closing after the download starts
+- Fully open source
 
-## Important limitation
+### Limitation
 
-Firefox extensions using the `downloads` API can suggest a relative filename/path inside the browser's download directory.
-
-Example:
-
-```text
-Saved Images/cat.jpg
-```
-
-If Firefox's download folder is `~/Downloads`, the image lands in:
-
-```text
-~/Downloads/Saved Images/cat.jpg
-```
-
-This extension does not write directly to arbitrary absolute paths such as `/home/user/Pictures`.
+Due to Firefox extension restrictions, downloads can only be saved within Firefox's configured download directory.
+Custom subfolders are supported, but arbitrary absolute filesystem paths are not.
 
 ## Development
 
@@ -61,22 +46,6 @@ npm run build
 ```
 
 This creates a ZIP file in `web-ext-artifacts/`.
-
-## Project structure
-
-```text
-one-click-image-save/
-├─ manifest.json
-├─ package.json
-├─ src/
-│  ├─ background.js
-│  ├─ options.html
-│  ├─ options.css
-│  └─ options.js
-└─ icons/
-   ├─ icon-48.svg
-   └─ icon-96.svg
-```
 
 ## Permissions
 
