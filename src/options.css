@@ -1,153 +1,329 @@
 :root {
-  color-scheme: light;
-  --bg: #f4f6f8;
-  --panel: #ffffff;
-  --text: #17212b;
-  --muted: #5c6875;
-  --line: #d9e0e7;
-  --accent: #0b6f85;
-  --accent-strong: #075d70;
-  --focus: rgba(11, 111, 133, 0.22);
-  --shadow: rgba(22, 35, 48, 0.1);
+  color-scheme: dark;
+  --bg: #080912;
+  --panel: rgba(12, 16, 33, 0.86);
+  --panel-hot: rgba(255, 48, 166, 0.08);
+  --text: #f7fbff;
+  --muted: #a9b4d6;
+  --line: rgba(108, 245, 255, 0.24);
+  --accent: #32f6ff;
+  --accent-strong: #ff3daf;
+  /*--accent-warm: #ffe66d;*/
+  --accent-warm: #a9b4d6;
+  --focus: rgba(50, 246, 255, 0.24);
+  --shadow: rgba(0, 0, 0, 0.44);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  min-height: 100%;
+}
+
 body {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   margin: 0;
+  overflow-x: hidden;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text);
-  background: var(--bg);
+  background:
+    linear-gradient(
+      100deg,
+      rgba(255, 61, 175, 0.18) 0%,
+      rgba(255, 61, 175, 0.18) 14%,
+      transparent 14%,
+      transparent 76%,
+      rgba(50, 246, 255, 0.14) 76%,
+      rgba(50, 246, 255, 0.14) 100%
+    ),
+    linear-gradient(180deg, rgba(255, 230, 109, 0.08), transparent 36%),
+    linear-gradient(145deg, #12091d 0%, #070b18 48%, #060611 100%);
+}
+
+body::before,
+body::after {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+}
+
+body::before {
+  opacity: 0.34;
+  background:
+    linear-gradient(rgba(50, 246, 255, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 61, 175, 0.14) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 18%, #000 78%, transparent 100%);
+}
+
+body::after {
+  opacity: 0.12;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.8) 0,
+    rgba(255, 255, 255, 0.8) 1px,
+    transparent 1px,
+    transparent 5px
+  );
 }
 
 main {
-  width: min(680px, calc(100% - 32px));
+  position: relative;
+  z-index: 1;
+  width: min(720px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 40px 0;
+  padding: 48px 0;
+}
+
+main::before {
+  position: absolute;
+  z-index: -1;
+  top: 102px;
+  right: -46px;
+  width: 176px;
+  height: 176px;
+  border-top: 1px solid rgba(255, 230, 109, 0.38);
+  border-right: 1px solid rgba(50, 246, 255, 0.38);
+  box-shadow:
+    14px -14px 0 rgba(255, 61, 175, 0.08),
+    0 0 34px rgba(255, 230, 109, 0.1);
+  pointer-events: none;
+  transform: rotate(12deg);
+  content: "";
 }
 
 .page-header {
-  margin-bottom: 18px;
+  position: relative;
+  margin-bottom: 20px;
+  padding-left: 16px;
+}
+
+.page-header::before {
+  position: absolute;
+  top: 0.24rem;
+  bottom: 0.12rem;
+  left: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, var(--accent), var(--accent-strong) 58%, var(--accent-warm));
+  box-shadow: 0 0 18px rgba(50, 246, 255, 0.7);
+  content: "";
 }
 
 h1 {
   margin: 0;
-  font-size: clamp(1.65rem, 4vw, 2.25rem);
-  line-height: 1.15;
+  color: var(--text);
+  font-size: clamp(1.8rem, 4vw, 2.55rem);
+  line-height: 1.05;
   letter-spacing: 0;
+  text-shadow:
+    0 0 18px rgba(50, 246, 255, 0.48),
+    2px 0 0 rgba(255, 61, 175, 0.34);
 }
 
 form {
+  position: relative;
   display: grid;
-  gap: 18px;
-  padding: 24px;
+  gap: 20px;
+  padding: 26px;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--panel);
-  box-shadow: 0 18px 48px var(--shadow);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 30%),
+    linear-gradient(180deg, var(--panel), rgba(8, 10, 24, 0.94)),
+    var(--panel);
+  box-shadow:
+    0 24px 70px var(--shadow),
+    0 0 0 1px rgba(255, 61, 175, 0.08),
+    0 0 42px rgba(50, 246, 255, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+form::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong), var(--accent-warm));
+  box-shadow: 0 0 18px rgba(255, 61, 175, 0.8);
+  content: "";
 }
 
 .field {
   display: grid;
-  gap: 8px;
+  gap: 9px;
   color: var(--muted);
-  font-size: 0.92rem;
-  font-weight: 650;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .checkbox-group {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
-  padding: 0;
+  padding: 16px 0 0;
   border: 0;
+  border-top: 1px solid rgba(108, 245, 255, 0.16);
 }
 
 .checkbox-group legend {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   padding: 0;
   color: var(--muted);
 }
 
 input {
-  font: inherit;
   width: 100%;
-  min-height: 44px;
-  padding: 0.68rem 0.75rem;
-  border: 1px solid var(--line);
+  min-height: 46px;
+  padding: 0.72rem 0.85rem;
+  border: 1px solid rgba(108, 245, 255, 0.28);
   border-radius: 6px;
-  color: var(--text);
-  background: #ffffff;
   outline: none;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+  color: var(--text);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(3, 8, 22, 0.74);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 0 22px rgba(50, 246, 255, 0);
+  font: inherit;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
 }
 
 input::placeholder {
-  color: #8b96a3;
+  color: rgba(169, 180, 214, 0.66);
+}
+
+input:hover {
+  border-color: rgba(50, 246, 255, 0.54);
 }
 
 input:focus-visible {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--focus);
+  box-shadow:
+    0 0 0 3px var(--focus),
+    0 0 28px rgba(50, 246, 255, 0.2);
 }
 
 .checkbox {
   display: grid;
-  grid-template-columns: 20px 1fr;
+  grid-template-columns: 22px 1fr;
   gap: 12px;
   align-items: center;
-  min-height: 28px;
+  min-height: 34px;
   color: var(--text);
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 570;
+  line-height: 1.35;
   text-transform: none;
 }
 
 .checkbox-stack {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .field + .checkbox-stack {
-  margin-top: -8px;
+  margin-top: -6px;
 }
 
 .checkbox input {
-  width: 20px;
-  min-height: 20px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  min-height: 22px;
   margin: 0;
-  accent-color: var(--accent-strong);
+  padding: 0;
+  appearance: none;
+  border-color: rgba(255, 61, 175, 0.52);
+  border-radius: 5px;
+  background: rgba(4, 8, 22, 0.82);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.checkbox input::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  box-shadow:
+    0 0 10px rgba(50, 246, 255, 0.75),
+    0 0 14px rgba(255, 61, 175, 0.65);
+  transform: scale(0);
+  transition: transform 140ms ease;
+  content: "";
+}
+
+.checkbox input:checked {
+  border-color: var(--accent);
+  background: rgba(50, 246, 255, 0.12);
+}
+
+.checkbox input:checked::before {
+  transform: scale(1);
 }
 
 .sub-checkbox {
-  margin-left: 32px;
-  color: var(--text);
+  margin-left: 34px;
+  color: #cbd2e8;
   font-size: 0.9rem;
 }
 
+.checkbox input:disabled {
+  border-color: rgba(169, 180, 214, 0.22);
+  background: rgba(78, 84, 110, 0.22);
+  cursor: not-allowed;
+}
+
 .checkbox input:disabled + span {
-  color: #9aa5b1;
+  color: rgba(169, 180, 214, 0.52);
 }
 
 #status {
   min-height: 1.4em;
   margin: 0;
-  color: var(--accent-strong);
+  color: var(--accent-warm);
   font-size: 0.92rem;
-  font-weight: 650;
+  font-weight: 720;
+  text-shadow: 0 0 14px rgba(255, 230, 109, 0.42);
 }
 
 @media (max-width: 560px) {
   main {
-    width: min(100% - 24px, 680px);
-    padding: 24px 0;
+    width: min(100% - 24px, 720px);
+    padding: 28px 0;
   }
 
   form {
-    gap: 16px;
-    padding: 18px;
+    gap: 17px;
+    padding: 20px;
+  }
+
+  .checkbox-stack {
+    padding-left: 12px;
+  }
+
+  .sub-checkbox {
+    margin-left: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
