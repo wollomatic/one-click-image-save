@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "One Click Image Save",
   "version": "0.1.0",
-  "description": "Save images from the context menu into a configured folder inside your Firefox downloads directory.",
+  "description": "Save images from the context menu into a folder inside your downloads directory.",
   "permissions": [
     "contextMenus",
     "downloads",
@@ -30,7 +30,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "one-click-image-save@example.com",
+      "id": "browser-addon@wollomatic.dev",
       "data_collection_permissions": {
         "required": [
           "none"
