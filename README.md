@@ -52,3 +52,15 @@ This creates a ZIP file in `web-ext-artifacts/`.
 - `contextMenus`: adds the right-click menu entry
 - `downloads`: saves the selected image
 - `storage`: stores the configured target folder and options
+
+## AI-Assisted Development
+
+This repository was developed using a combination of manual engineering and AI-assisted tooling.
+
+OpenAI Codex was used for tasks such as:
+- Code generation
+- Refactoring
+- Documentation drafting
+- Boilerplate creation
+
+All generated output was reviewed and adapted as necessary. No AI-generated contribution is assumed to be correct, secure, or production-ready without human verification.
