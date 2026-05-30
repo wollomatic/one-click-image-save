@@ -1,6 +1,5 @@
 {
   "name": "one-click-image-save",
-  "version": "0.1.0",
   "private": true,
   "description": "Firefox extension to save images with one click into a configured downloads subfolder.",
   "scripts": {

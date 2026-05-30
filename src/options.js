@@ -17,9 +17,11 @@ const prefixTimestamp = document.querySelector("#prefix-timestamp");
 const overwriteExisting = document.querySelector("#overwrite-existing");
 const closeTab = document.querySelector("#close-tab");
 const status = document.querySelector("#status");
+const extensionVersion = document.querySelector("#extension-version");
 let saveTimeout;
 let clearStatusTimeout;
 
+setVersionInfo();
 loadOptions();
 
 form.addEventListener("submit", (event) => {
@@ -81,6 +83,10 @@ function showStatus(message) {
   clearStatusTimeout = setTimeout(() => {
     status.textContent = "";
   }, 2000);
+}
+
+function setVersionInfo() {
+  extensionVersion.textContent = `version ${browser.runtime.getManifest().version}`;
 }
 
 async function loadOptions() {

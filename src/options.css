@@ -299,6 +299,29 @@ input:focus-visible {
   text-shadow: 0 0 14px rgba(255, 230, 109, 0.42);
 }
 
+.page-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.page-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  text-shadow: 0 0 12px rgba(50, 246, 255, 0.45);
+}
+
+.page-footer a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 @media (max-width: 560px) {
   main {
     width: min(100% - 24px, 720px);
