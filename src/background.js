@@ -1,13 +1,16 @@
 const DEFAULTS = {
   targetFolder: "Saved Images",
-  filenameMode: "original",
+  domainSubfolder: false,
+  completeHostname: false,
+  prefixDomain: false,
+  prefixTimestamp: false,
   conflictAction: "uniquify",
+  closeTab: false,
   showNotification: true
 };
 
 const MENU_ID_SAVE = "one-click-image-save";
-const MENU_ID_SAVE_AND_CLOSE = "one-click-image-save-and-close";
-const MENU_IDS = [MENU_ID_SAVE, MENU_ID_SAVE_AND_CLOSE];
+const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite"]);
 
 browser.runtime.onInstalled.addListener(async () => {
   await ensureDefaults();
@@ -27,14 +30,15 @@ browser.action.onClicked.addListener(() => {
 });
 
 browser.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (!MENU_IDS.includes(info.menuItemId) || !info.srcUrl) {
+  if (info.menuItemId !== MENU_ID_SAVE || !info.srcUrl) {
     return;
   }
 
   try {
-    await saveImage(info.srcUrl);
+    const options = await getOptions();
+    await saveImage(info.srcUrl, options);
 
-    if (info.menuItemId === MENU_ID_SAVE_AND_CLOSE && typeof tab?.id === "number") {
+    if (options.closeTab && typeof tab?.id === "number") {
       await closeTab(tab.id);
     }
   } catch (error) {
@@ -50,23 +54,19 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 function createContextMenu() {
-  Promise.all(MENU_IDS.map((menuId) => browser.contextMenus.remove(menuId).catch(() => undefined))).finally(() => {
+  Promise.all([
+    browser.contextMenus.remove(MENU_ID_SAVE).catch(() => undefined),
+    browser.contextMenus.remove("one-click-image-save-and-close").catch(() => undefined)
+  ]).finally(() => {
     browser.contextMenus.create({
       id: MENU_ID_SAVE,
       title: "Save image",
       contexts: ["image"]
     });
-
-    browser.contextMenus.create({
-      id: MENU_ID_SAVE_AND_CLOSE,
-      title: "Save image and close tab",
-      contexts: ["image"]
-    });
   });
 }
 
-async function saveImage(srcUrl) {
-  const options = await getOptions();
+async function saveImage(srcUrl, options) {
   const filename = buildDownloadFilename(srcUrl, options);
 
   const downloadId = await browser.downloads.download({
@@ -101,22 +101,37 @@ async function ensureDefaults() {
 
 async function getOptions() {
   const options = await browser.storage.local.get(DEFAULTS);
-  return { ...DEFAULTS, ...options };
+  const normalized = { ...DEFAULTS, ...options };
+
+  if (!CONFLICT_ACTIONS.has(normalized.conflictAction)) {
+    normalized.conflictAction = DEFAULTS.conflictAction;
+  }
+
+  return normalized;
 }
 
 function buildDownloadFilename(srcUrl, options) {
   const folder = sanitizePathSegment(options.targetFolder || DEFAULTS.targetFolder);
+  const folderParts = [folder];
   const originalName = getOriginalFilename(srcUrl);
   const safeOriginalName = sanitizeFilename(originalName);
+  const prefixes = [];
 
-  let finalName;
-  if (options.filenameMode === "timestamp") {
-    finalName = `${timestamp()}-${safeOriginalName}`;
-  } else {
-    finalName = safeOriginalName;
+  if (options.domainSubfolder) {
+    folderParts.push(domainSubfolderName(srcUrl, options));
   }
 
-  return folder ? `${folder}/${finalName}` : finalName;
+  if (options.prefixDomain) {
+    prefixes.push(domainName(srcUrl));
+  }
+
+  if (options.prefixTimestamp) {
+    prefixes.push(timestamp());
+  }
+
+  const finalName = [...prefixes, safeOriginalName].join("-");
+
+  return [...folderParts, finalName].filter(Boolean).join("/");
 }
 
 function getOriginalFilename(srcUrl) {
@@ -166,6 +181,46 @@ function sanitizePathSegment(path) {
     .map((part) => sanitizeFilename(part))
     .filter(Boolean)
     .join("/");
+}
+
+function domainName(srcUrl) {
+  return sanitizeDomainPrefix(websiteDomain(srcUrl));
+}
+
+function domainSubfolderName(srcUrl, options) {
+  const domain = options.completeHostname ? completeHostname(srcUrl) : websiteDomain(srcUrl);
+  return sanitizeFilename(domain);
+}
+
+function completeHostname(srcUrl) {
+  try {
+    return new URL(srcUrl).hostname || "unknown-domain";
+  } catch {
+    return "unknown-domain";
+  }
+}
+
+function websiteDomain(srcUrl) {
+  try {
+    const hostname = new URL(srcUrl).hostname.replace(/^www\./i, "");
+    const parts = hostname.split(".").filter(Boolean);
+
+    if (parts.length <= 2) {
+      return hostname || "unknown-domain";
+    }
+
+    const suffix = parts.slice(-2).join(".");
+    const secondLevelSuffixes = new Set(["co.uk", "com.au", "com.br", "com.cn", "com.mx", "com.tr", "co.jp"]);
+    const domainParts = secondLevelSuffixes.has(suffix) ? parts.slice(-3) : parts.slice(-2);
+
+    return domainParts.join(".") || "unknown-domain";
+  } catch {
+    return "unknown-domain";
+  }
+}
+
+function sanitizeDomainPrefix(domain) {
+  return sanitizeFilename(domain.replace(/\./g, "_"));
 }
 
 function timestamp() {
