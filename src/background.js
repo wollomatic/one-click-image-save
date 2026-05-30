@@ -5,25 +5,22 @@ const DEFAULTS = {
   prefixDomain: false,
   prefixTimestamp: false,
   conflictAction: "uniquify",
-  closeTab: false,
-  showNotification: true
+  closeTab: false
 };
 
 const MENU_ID_SAVE = "one-click-image-save";
+const LEGACY_MENU_IDS = ["one-click-image-save-and-close"];
 const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite"]);
+let menuSetup = Promise.resolve();
 
-browser.runtime.onInstalled.addListener(async () => {
-  await ensureDefaults();
-  createContextMenu();
-});
+browser.runtime.onInstalled.addListener(() => initialize());
 
-browser.runtime.onStartup.addListener(async () => {
-  await ensureDefaults();
-  createContextMenu();
-});
+browser.runtime.onStartup.addListener(() => initialize());
 
 // During temporary add-on reloads, this makes the menu appear immediately.
-createContextMenu();
+initialize().catch((error) => {
+  console.error("Could not initialize One Click Image Save:", error);
+});
 
 browser.action.onClicked.addListener(() => {
   browser.runtime.openOptionsPage();
@@ -43,47 +40,39 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
     }
   } catch (error) {
     console.error("Could not save image:", error);
-
-    browser.notifications.create("save-failed", {
-      type: "basic",
-      iconUrl: browser.runtime.getURL("icons/icon-96.svg"),
-      title: "Could not save image",
-      message: error instanceof Error ? error.message : String(error)
-    });
   }
 });
 
+async function initialize() {
+  await ensureDefaults();
+  await createContextMenu();
+}
+
 function createContextMenu() {
-  Promise.all([
-    browser.contextMenus.remove(MENU_ID_SAVE).catch(() => undefined),
-    browser.contextMenus.remove("one-click-image-save-and-close").catch(() => undefined)
-  ]).finally(() => {
+  menuSetup = menuSetup.catch(() => undefined).then(async () => {
+    await Promise.all([MENU_ID_SAVE, ...LEGACY_MENU_IDS].map((menuId) => (
+      browser.contextMenus.remove(menuId).catch(() => undefined)
+    )));
+
     browser.contextMenus.create({
       id: MENU_ID_SAVE,
       title: "Save image",
       contexts: ["image"]
     });
   });
+
+  return menuSetup;
 }
 
 async function saveImage(srcUrl, options) {
   const filename = buildDownloadFilename(srcUrl, options);
 
-  const downloadId = await browser.downloads.download({
+  await browser.downloads.download({
     url: srcUrl,
     filename,
     saveAs: false,
     conflictAction: options.conflictAction
   });
-
-  if (options.showNotification) {
-    browser.notifications.create(`saved-${downloadId}`, {
-      type: "basic",
-      iconUrl: browser.runtime.getURL("icons/icon-96.svg"),
-      title: "Image save started",
-      message: filename
-    });
-  }
 }
 
 async function closeTab(tabId) {
@@ -169,10 +158,32 @@ function sanitizeFilename(filename) {
     .replace(/[\u0000-\u001f\u007f]/g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/^\.+$/, "image")
-    .slice(0, 180);
+    .replace(/^\.+$/, "image");
 
-  return clean || `image-${timestamp()}.jpg`;
+  if (!clean) {
+    return `image-${timestamp()}.jpg`;
+  }
+
+  return truncateFilename(clean, 180);
+}
+
+function truncateFilename(filename, maxLength) {
+  if (filename.length <= maxLength) {
+    return filename;
+  }
+
+  const extension = filename.match(/\.(avif|bmp|gif|jpe?g|png|svg|webp|tiff?)$/i)?.[0] || "";
+
+  if (!extension || extension.length >= maxLength) {
+    return filename.slice(0, maxLength).trim() || "image";
+  }
+
+  const basename = filename
+    .slice(0, maxLength - extension.length)
+    .trim()
+    .replace(/^\.+$/, "image") || "image";
+
+  return `${basename}${extension}`;
 }
 
 function sanitizePathSegment(path) {
@@ -205,7 +216,7 @@ function websiteDomain(srcUrl) {
     const hostname = new URL(srcUrl).hostname.replace(/^www\./i, "");
     const parts = hostname.split(".").filter(Boolean);
 
-    if (parts.length <= 2) {
+    if (parts.length <= 2 || isIpAddress(hostname)) {
       return hostname || "unknown-domain";
     }
 
@@ -217,6 +228,10 @@ function websiteDomain(srcUrl) {
   } catch {
     return "unknown-domain";
   }
+}
+
+function isIpAddress(hostname) {
+  return /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(":");
 }
 
 function sanitizeDomainPrefix(domain) {

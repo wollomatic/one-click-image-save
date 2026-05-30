@@ -5,8 +5,7 @@ const DEFAULTS = {
   prefixDomain: false,
   prefixTimestamp: false,
   conflictAction: "uniquify",
-  closeTab: false,
-  showNotification: true
+  closeTab: false
 };
 
 const form = document.querySelector("#options-form");
@@ -16,7 +15,6 @@ const completeHostname = document.querySelector("#complete-hostname");
 const prefixDomain = document.querySelector("#prefix-domain");
 const prefixTimestamp = document.querySelector("#prefix-timestamp");
 const overwriteExisting = document.querySelector("#overwrite-existing");
-const showNotification = document.querySelector("#show-notification");
 const closeTab = document.querySelector("#close-tab");
 const status = document.querySelector("#status");
 let saveTimeout;
@@ -41,8 +39,7 @@ for (const control of [
   prefixDomain,
   prefixTimestamp,
   overwriteExisting,
-  closeTab,
-  showNotification
+  closeTab
 ]) {
   control.addEventListener("change", saveOptions);
 }
@@ -57,8 +54,7 @@ function getOptions() {
     prefixDomain: prefixDomain.checked,
     prefixTimestamp: prefixTimestamp.checked,
     conflictAction: overwriteExisting.checked ? "overwrite" : "uniquify",
-    closeTab: closeTab.checked,
-    showNotification: showNotification.checked
+    closeTab: closeTab.checked
   };
 }
 
@@ -97,7 +93,6 @@ async function loadOptions() {
   prefixTimestamp.checked = options.prefixTimestamp;
   overwriteExisting.checked = options.conflictAction === "overwrite";
   closeTab.checked = options.closeTab;
-  showNotification.checked = options.showNotification;
   updateDependentControls();
 }
 

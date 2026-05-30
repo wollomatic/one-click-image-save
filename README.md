@@ -5,8 +5,8 @@ A small Firefox WebExtension that adds a right-click menu entry for images and s
 ## Features
 
 - Right-click an image and choose **Save image**
-- Optional setting to close the current tab after the download starts
 - Saves without a file picker dialog
+- Optional setting to close the current tab after the download starts
 - Configurable target subfolder, for example `Saved Images`
 - Optional website domain subfolder, with complete-hostname mode
 - Optional timestamp or domain name prefix
@@ -83,4 +83,3 @@ one-click-image-save/
 - `contextMenus`: adds the right-click menu entry
 - `downloads`: saves the selected image
 - `storage`: stores the configured target folder and options
-- `notifications`: shows optional save/failure notifications
