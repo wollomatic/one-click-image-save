@@ -22,6 +22,10 @@ browser.runtime.onStartup.addListener(async () => {
 // During temporary add-on reloads, this makes the menu appear immediately.
 createContextMenu();
 
+browser.action.onClicked.addListener(() => {
+  browser.runtime.openOptionsPage();
+});
+
 browser.contextMenus.onClicked.addListener(async (info, tab) => {
   if (!MENU_IDS.includes(info.menuItemId) || !info.srcUrl) {
     return;

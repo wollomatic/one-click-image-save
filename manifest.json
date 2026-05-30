@@ -14,6 +14,13 @@
       "src/background.js"
     ]
   },
+  "action": {
+    "default_title": "Open One Click Image Save options",
+    "default_icon": {
+      "48": "icons/icon-48.svg",
+      "96": "icons/icon-96.svg"
+    }
+  },
   "options_ui": {
     "page": "src/options.html",
     "open_in_tab": true
