@@ -1,0 +1,67 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  background: #f7f7f8;
+  color: #202124;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
+
+input,
+select {
+  padding: 0.55rem;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+button {
+  width: fit-content;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 8px;
+  background: #202124;
+  color: white;
+  cursor: pointer;
+}
+
+#status {
+  min-height: 1.4em;
+  color: #176b2c;
+}
+
+code {
+  background: #ececf0;
+  padding: 0.1rem 0.25rem;
+  border-radius: 4px;
+}

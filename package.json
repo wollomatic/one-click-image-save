@@ -1,0 +1,19 @@
+{
+  "name": "one-click-image-save",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Firefox extension to save images with one click into a configured downloads subfolder.",
+  "scripts": {
+    "start": "web-ext run --source-dir .",
+    "lint": "web-ext lint --source-dir .",
+    "build": "web-ext build --source-dir . --overwrite-dest"
+  },
+  "pnpm": {
+    "overrides": {
+      "isexe@^1.1.1": "2.0.0"
+    }
+  },
+  "devDependencies": {
+    "web-ext": "^8.9.0"
+  }
+}

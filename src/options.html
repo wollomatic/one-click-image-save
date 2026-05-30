@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>One Click Image Save Options</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main>
+      <h1>One Click Image Save</h1>
+
+      <form id="options-form">
+        <label>
+          Target folder inside your Firefox downloads directory
+          <input id="target-folder" name="targetFolder" type="text" autocomplete="off" placeholder="Saved Images">
+        </label>
+
+        <label>
+          Filename mode
+          <select id="filename-mode" name="filenameMode">
+            <option value="original">Use original filename</option>
+            <option value="timestamp">Prefix timestamp</option>
+          </select>
+        </label>
+
+        <label>
+          If file already exists
+          <select id="conflict-action" name="conflictAction">
+            <option value="uniquify">Create unique filename</option>
+            <option value="overwrite">Overwrite</option>
+            <option value="prompt">Ask Firefox</option>
+          </select>
+        </label>
+
+        <label class="checkbox">
+          <input id="show-notification" name="showNotification" type="checkbox">
+          Show notification after saving
+        </label>
+
+        <button type="submit">Save options</button>
+        <p id="status" role="status"></p>
+      </form>
+
+      <section>
+        <h2>Example</h2>
+        <p>
+          If your Firefox download folder is <code>~/Downloads</code> and the configured folder is
+          <code>Saved Images</code>, images are saved into <code>~/Downloads/Saved Images/</code>.
+        </p>
+      </section>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>
