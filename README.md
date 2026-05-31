@@ -2,9 +2,9 @@
 
 A lightweight Firefox extension that adds a **Save image** entry to the image context menu and downloads images instantly without showing the file picker.
 
-![Save image context menu](screenshot-menu.png)
+![Save image context menu](screenshots/screenshot-menu.png)
 
-![Extension options page](screenshot-options.png)
+![Extension options page](screenshots/screenshot-options.png)
 
 ## Features
 
