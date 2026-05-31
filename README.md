@@ -14,6 +14,7 @@ A lightweight Firefox extension that adds a **Save image** entry to the image co
 - Configurable target folder inside your Firefox downloads directory
 - Optional website-specific subfolders
 - Optional filename prefixes based on timestamp or website domain
+- Configurable handling for filename conflicts
 - Optional automatic tab closing after the download starts
 - Fully open source
 

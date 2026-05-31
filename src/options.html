@@ -47,14 +47,25 @@
             <input id="menu-access-key" name="menuAccessKey" type="text" maxlength="1" autocomplete="off" inputmode="text" placeholder="i">
           </label>
 
-          <label class="checkbox">
-            <input id="overwrite-existing" name="overwriteExisting" type="checkbox">
-            <span>Overwrite existing files</span>
-          </label>
+          <fieldset class="field checkbox-group conflict-group">
+            <legend>When file with same name already exists:</legend>
+            <label class="checkbox">
+              <input name="conflictAction" type="radio" value="uniquify">
+              <span>Create unique filename</span>
+            </label>
+            <label class="checkbox">
+              <input name="conflictAction" type="radio" value="overwrite">
+              <span>Overwrite file</span>
+            </label>
+            <label class="checkbox">
+              <input name="conflictAction" type="radio" value="skip">
+              <span>Skip file</span>
+            </label>
+          </fieldset>
 
           <label class="checkbox">
             <input id="close-tab" name="closeTab" type="checkbox">
-            <span>Close tab after saving</span>
+            <span>Close browser tab after saving</span>
           </label>
         </fieldset>
 

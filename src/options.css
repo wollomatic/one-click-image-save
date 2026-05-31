@@ -174,7 +174,7 @@ form::before {
 }
 
 .checkbox-group legend {
-  margin-bottom: 8px;
+  margin-bottom: 2px;
   padding: 0;
   color: var(--muted);
 }
@@ -252,6 +252,10 @@ input:focus-visible {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
+.checkbox input[type="radio"] {
+  border-radius: 50%;
+}
+
 .checkbox input:focus-visible {
   border-color: var(--accent);
   box-shadow:
@@ -273,6 +277,10 @@ input:focus-visible {
   content: "";
 }
 
+.checkbox input[type="radio"]::before {
+  border-radius: 50%;
+}
+
 .checkbox input:checked {
   border-color: var(--accent);
   background: rgba(50, 246, 255, 0.12);
@@ -286,6 +294,16 @@ input:focus-visible {
   margin-left: 34px;
   color: #cbd2e8;
   font-size: 0.9rem;
+}
+
+.conflict-group {
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.conflict-group .checkbox {
+  margin-left: 34px;
 }
 
 .checkbox input:disabled {
@@ -346,6 +364,10 @@ input:focus-visible {
   }
 
   .sub-checkbox {
+    margin-left: 18px;
+  }
+
+  .conflict-group .checkbox {
     margin-left: 18px;
   }
 }

@@ -11,7 +11,7 @@ const DEFAULTS = {
 
 const MENU_ID_SAVE = "one-click-image-save";
 const LEGACY_MENU_IDS = ["one-click-image-save-and-close"];
-const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite"]);
+const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite", "skip"]);
 const IMAGE_EXTENSIONS = new Set(["avif", "bmp", "gif", "jpg", "jpeg", "png", "svg", "webp", "tif", "tiff"]);
 let menuSetup = Promise.resolve();
 
@@ -41,9 +41,9 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
 
   try {
     const options = await getOptions();
-    await saveImage(info.srcUrl, options);
+    const saved = await saveImage(info.srcUrl, options);
 
-    if (options.closeTab && typeof tab?.id === "number") {
+    if (saved && options.closeTab && typeof tab?.id === "number") {
       await closeTab(tab.id);
     }
   } catch (error) {
@@ -81,12 +81,18 @@ async function saveImage(srcUrl, options) {
 
   const filename = buildDownloadFilename(srcUrl, options);
 
+  if (options.conflictAction === "skip" && await downloadExists(filename)) {
+    return false;
+  }
+
   await browser.downloads.download({
     url: srcUrl,
     filename,
     saveAs: false,
-    conflictAction: options.conflictAction
+    conflictAction: downloadConflictAction(options.conflictAction)
   });
+
+  return true;
 }
 
 function isAllowedImageUrl(srcUrl) {
@@ -105,6 +111,30 @@ function isAllowedImageUrl(srcUrl) {
 
 function safeUrlForLog(srcUrl) {
   return String(srcUrl).slice(0, 120).replace(/[\u0000-\u001f\u007f]/g, "");
+}
+
+async function downloadExists(filename) {
+  const matchingDownloads = await browser.downloads.search({
+    filenameRegex: downloadFilenameSuffixRegex(filename),
+    exists: true,
+    state: "complete"
+  });
+
+  return matchingDownloads.length > 0;
+}
+
+function downloadFilenameSuffixRegex(filename) {
+  const parts = filename.split("/").filter(Boolean).map(escapeRegex);
+
+  return `[\\\\/]${parts.join("[\\\\/]")}$`;
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
+}
+
+function downloadConflictAction(conflictAction) {
+  return conflictAction === "overwrite" ? "overwrite" : "uniquify";
 }
 
 async function closeTab(tabId) {

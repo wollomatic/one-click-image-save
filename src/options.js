@@ -16,7 +16,7 @@ const completeHostname = document.querySelector("#complete-hostname");
 const prefixDomain = document.querySelector("#prefix-domain");
 const prefixTimestamp = document.querySelector("#prefix-timestamp");
 const menuAccessKey = document.querySelector("#menu-access-key");
-const overwriteExisting = document.querySelector("#overwrite-existing");
+const conflictActions = [...document.querySelectorAll('input[name="conflictAction"]')];
 const closeTab = document.querySelector("#close-tab");
 const status = document.querySelector("#status");
 const extensionVersion = document.querySelector("#extension-version");
@@ -47,7 +47,7 @@ for (const control of [
   completeHostname,
   prefixDomain,
   prefixTimestamp,
-  overwriteExisting,
+  ...conflictActions,
   closeTab
 ]) {
   control.addEventListener("change", saveOptions);
@@ -62,7 +62,7 @@ function getOptions() {
     completeHostname: completeHostname.checked,
     prefixDomain: prefixDomain.checked,
     prefixTimestamp: prefixTimestamp.checked,
-    conflictAction: overwriteExisting.checked ? "overwrite" : "uniquify",
+    conflictAction: selectedConflictAction(),
     closeTab: closeTab.checked,
     menuAccessKey: normalizeAccessKey(menuAccessKey.value)
   };
@@ -106,7 +106,7 @@ async function loadOptions() {
   prefixDomain.checked = options.prefixDomain;
   prefixTimestamp.checked = options.prefixTimestamp;
   menuAccessKey.value = normalizeAccessKey(options.menuAccessKey);
-  overwriteExisting.checked = options.conflictAction === "overwrite";
+  setConflictAction(options.conflictAction);
   closeTab.checked = options.closeTab;
   updateDependentControls();
 }
@@ -132,4 +132,17 @@ function normalizeAccessKey(value) {
   }
 
   return "";
+}
+
+function selectedConflictAction() {
+  return conflictActions.find((control) => control.checked)?.value || DEFAULTS.conflictAction;
+}
+
+function setConflictAction(value) {
+  const normalized = ["uniquify", "overwrite", "skip"].includes(value) ? value : DEFAULTS.conflictAction;
+  const selected = conflictActions.find((control) => control.value === normalized);
+
+  if (selected) {
+    selected.checked = true;
+  }
 }
