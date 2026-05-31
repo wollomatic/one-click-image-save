@@ -5,7 +5,8 @@ const DEFAULTS = {
   prefixDomain: false,
   prefixTimestamp: false,
   conflictAction: "uniquify",
-  closeTab: false
+  closeTab: false,
+  menuAccessKey: "i"
 };
 
 const MENU_ID_SAVE = "one-click-image-save";
@@ -25,6 +26,12 @@ initialize().catch((error) => {
 
 browser.action.onClicked.addListener(() => {
   browser.runtime.openOptionsPage();
+});
+
+browser.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "local" && changes.menuAccessKey) {
+    createContextMenu();
+  }
 });
 
 browser.contextMenus.onClicked.addListener(async (info, tab) => {
@@ -51,13 +58,15 @@ async function initialize() {
 
 function createContextMenu() {
   menuSetup = menuSetup.catch(() => undefined).then(async () => {
+    const options = await getOptions();
+
     await Promise.all([MENU_ID_SAVE, ...LEGACY_MENU_IDS].map((menuId) => (
       browser.contextMenus.remove(menuId).catch(() => undefined)
     )));
 
     browser.contextMenus.create({
       id: MENU_ID_SAVE,
-      title: "Save image",
+      title: menuTitle(options.menuAccessKey),
       contexts: ["image"]
     });
   });
@@ -119,7 +128,36 @@ async function getOptions() {
     normalized.conflictAction = DEFAULTS.conflictAction;
   }
 
+  normalized.menuAccessKey = normalizeAccessKey(normalized.menuAccessKey);
+
   return normalized;
+}
+
+function menuTitle(accessKey) {
+  const title = "Save image";
+  const normalizedAccessKey = normalizeAccessKey(accessKey);
+
+  if (!normalizedAccessKey) {
+    return title;
+  }
+
+  const accessKeyIndex = title.toLowerCase().indexOf(normalizedAccessKey.toLowerCase());
+
+  if (accessKeyIndex >= 0) {
+    return `${title.slice(0, accessKeyIndex)}&${title.slice(accessKeyIndex)}`;
+  }
+
+  return `${title} (&${normalizedAccessKey.toUpperCase()})`;
+}
+
+function normalizeAccessKey(value) {
+  const normalized = String(value || "").trim();
+
+  if (/^[a-z0-9]$/i.test(normalized)) {
+    return normalized;
+  }
+
+  return "";
 }
 
 function buildDownloadFilename(srcUrl, options) {

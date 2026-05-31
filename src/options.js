@@ -5,7 +5,8 @@ const DEFAULTS = {
   prefixDomain: false,
   prefixTimestamp: false,
   conflictAction: "uniquify",
-  closeTab: false
+  closeTab: false,
+  menuAccessKey: "i"
 };
 
 const form = document.querySelector("#options-form");
@@ -14,6 +15,7 @@ const domainSubfolder = document.querySelector("#domain-subfolder");
 const completeHostname = document.querySelector("#complete-hostname");
 const prefixDomain = document.querySelector("#prefix-domain");
 const prefixTimestamp = document.querySelector("#prefix-timestamp");
+const menuAccessKey = document.querySelector("#menu-access-key");
 const overwriteExisting = document.querySelector("#overwrite-existing");
 const closeTab = document.querySelector("#close-tab");
 const status = document.querySelector("#status");
@@ -32,6 +34,11 @@ form.addEventListener("submit", (event) => {
 targetFolder.addEventListener("input", scheduleSave);
 targetFolder.addEventListener("blur", () => {
   targetFolder.value = normalizeFolder(targetFolder.value);
+  saveOptions();
+});
+
+menuAccessKey.addEventListener("input", () => {
+  menuAccessKey.value = normalizeAccessKey(menuAccessKey.value);
   saveOptions();
 });
 
@@ -56,7 +63,8 @@ function getOptions() {
     prefixDomain: prefixDomain.checked,
     prefixTimestamp: prefixTimestamp.checked,
     conflictAction: overwriteExisting.checked ? "overwrite" : "uniquify",
-    closeTab: closeTab.checked
+    closeTab: closeTab.checked,
+    menuAccessKey: normalizeAccessKey(menuAccessKey.value)
   };
 }
 
@@ -97,6 +105,7 @@ async function loadOptions() {
   completeHostname.checked = options.completeHostname;
   prefixDomain.checked = options.prefixDomain;
   prefixTimestamp.checked = options.prefixTimestamp;
+  menuAccessKey.value = normalizeAccessKey(options.menuAccessKey);
   overwriteExisting.checked = options.conflictAction === "overwrite";
   closeTab.checked = options.closeTab;
   updateDependentControls();
@@ -113,4 +122,14 @@ function normalizeFolder(value) {
     .map((part) => part.trim().replace(/[\\:*?"<>|]/g, "_"))
     .filter(Boolean)
     .join("/") || DEFAULTS.targetFolder;
+}
+
+function normalizeAccessKey(value) {
+  const normalized = String(value || "").trim();
+
+  if (/^[a-z0-9]$/i.test(normalized)) {
+    return normalized;
+  }
+
+  return "";
 }
