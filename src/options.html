@@ -12,59 +12,59 @@
       </header>
 
       <form id="options-form">
-        <label class="field">
+        <label class="field" title="Choose the subfolder inside your browser´s downloads folder where images are saved. Absolute paths outside the downloads folder are not supported for security reasons.">
           <span>Target folder</span>
-          <input id="target-folder" name="targetFolder" type="text" autocomplete="off" placeholder="Saved Images">
+          <input id="target-folder" name="targetFolder" type="text" autocomplete="off" placeholder="Saved Images" title="Choose the subfolder inside your browser´s downloads folder where images are saved. Absolute paths outside the downloads folder are not supported for security reasons.">
         </label>
 
         <div class="checkbox-stack">
-          <label class="checkbox">
-            <input id="domain-subfolder" name="domainSubfolder" type="checkbox">
+          <label class="checkbox" title="Create an extra subfolder named after the image website´s domain name, so downloads from different sites are grouped separately.">
+            <input id="domain-subfolder" name="domainSubfolder" type="checkbox" title="Create an extra subfolder named after the image website´s domain name, so downloads from different sites are grouped separately.">
             <span>Save in a website domain subfolder</span>
           </label>
-          <label class="checkbox sub-checkbox">
-            <input id="complete-hostname" name="completeHostname" type="checkbox" disabled>
+          <label class="checkbox sub-checkbox" title="Use the full host name for the website subfolder, such as images.example.com, instead of shortening it to the registered domain, such as example.com.">
+            <input id="complete-hostname" name="completeHostname" type="checkbox" disabled title="Use the full host name for the website subfolder, such as images.example.com, instead of shortening it to the registered domain, such as example.com.">
             <span>Use full hostname</span>
           </label>
         </div>
 
         <fieldset class="field checkbox-group">
           <legend>Filename options</legend>
-          <label class="checkbox">
-            <input id="prefix-domain" name="prefixDomain" type="checkbox">
+          <label class="checkbox" title="Add the website domain to the beginning of each saved filename, making the source site visible even when files are stored in the same folder. E.g. example_com-filename.jpg">
+            <input id="prefix-domain" name="prefixDomain" type="checkbox" title="Add the website domain to the beginning of each saved filename, making the source site visible even when files are stored in the same folder. E.g. example_com-filename.jpg">
             <span>Prefix website domain name</span>
           </label>
-          <label class="checkbox">
-            <input id="prefix-timestamp" name="prefixTimestamp" type="checkbox">
+          <label class="checkbox" title="Add the current date and time to the beginning of each saved filename, which helps keep saves ordered and reduces name collisions. E.g. 2026-05-31_14-39-30-filename.jpg">
+            <input id="prefix-timestamp" name="prefixTimestamp" type="checkbox" title="Add the current date and time to the beginning of each saved filename, which helps keep saves ordered and reduces name collisions. E.g. 2026-05-31_14-39-30-filename.jpg">
             <span>Prefix timestamp</span>
           </label>
         </fieldset>
 
         <fieldset class="field checkbox-group">
           <legend>Misc. options</legend>
-          <label class="field">
+          <label class="field" title="Set the single keyboard access key shown in your browser´s image context menu entry. Use one letter or number, or leave it empty to disable the access key.">
             <span>Menu access key</span>
-            <input id="menu-access-key" name="menuAccessKey" type="text" maxlength="1" autocomplete="off" inputmode="text" placeholder="i">
+            <input id="menu-access-key" name="menuAccessKey" type="text" maxlength="1" autocomplete="off" inputmode="text" placeholder="i" title="Set the single keyboard access key shown in your browser´s image context menu entry. Use one letter or number, or leave it empty to disable the access key.">
           </label>
 
           <fieldset class="field checkbox-group conflict-group">
             <legend>When file with same name already exists:</legend>
-            <label class="checkbox">
-              <input name="conflictAction" type="radio" value="uniquify">
+            <label class="checkbox" title="If a file with the same name already exists, let the browser create a new numbered filename instead of replacing the existing file.">
+              <input name="conflictAction" type="radio" value="uniquify" title="If a file with the same name already exists, let the browser create a new numbered filename instead of replacing the existing file.">
               <span>Create unique filename</span>
             </label>
-            <label class="checkbox">
-              <input name="conflictAction" type="radio" value="overwrite">
-              <span>Overwrite file</span>
+            <label class="checkbox" title="If a file with the same name already exists, replace it with the newly saved image. Use this only when you want repeat saves to update the same file.">
+              <input name="conflictAction" type="radio" value="overwrite" title="If a file with the same name already exists, replace it with the newly saved image. Use this only when you want repeat saves to update the same file.">
+              <span>Overwrite file without warning</span>
             </label>
-            <label class="checkbox">
-              <input name="conflictAction" type="radio" value="skip">
-              <span>Skip file</span>
+            <label class="checkbox" title="If a matching completed download already exists, do not start a new download for that filename.">
+              <input name="conflictAction" type="radio" value="skip" title="If a matching completed download already exists, do not start a new download for that filename.">
+              <span>Skip file without warning</span>
             </label>
           </fieldset>
 
-          <label class="checkbox">
-            <input id="close-tab" name="closeTab" type="checkbox">
+          <label class="checkbox" title="After the image download starts successfully, close the browser tab where the image was saved from.">
+            <input id="close-tab" name="closeTab" type="checkbox" title="After the image download starts successfully, close the browser tab where the image was saved from.">
             <span>Close browser tab after saving</span>
           </label>
         </fieldset>
@@ -72,7 +72,7 @@
         <p id="status" role="status" aria-live="polite"></p>
       </form>
 
-      <footer class="page-footer">
+      <footer class="page-footer">R
         <a href="https://codeberg.org/wollomatic/one-click-image-save" target="_blank" rel="noopener noreferrer">
           Repository
         </a>
