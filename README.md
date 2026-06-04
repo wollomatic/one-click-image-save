@@ -21,12 +21,24 @@ Supports desktop Firefox. Firefox for Android is not supported because it does n
 - Optional filename prefixes based on timestamp or website domain
 - Configurable handling for filename conflicts
 - Optional automatic tab closing after the download starts
+- Transparent about saved extension settings
 - Fully open source
 
 ### Limitation
 
 Due to Firefox extension restrictions, downloads can only be saved within Firefox's configured download directory.
 Custom subfolders are supported, but arbitrary absolute filesystem paths are not.
+
+### Changelog
+
+#### 0.3.0
+
+* Store only non-default settings.
+* Added an option to delete all settings from browser storage.
+
+#### 0.2.3
+
+* First published release.
 
 ## Development
 

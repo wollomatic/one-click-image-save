@@ -52,7 +52,6 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 async function initialize() {
-  await ensureDefaults();
   await createContextMenu();
 }
 
@@ -143,11 +142,6 @@ async function closeTab(tabId) {
   } catch (error) {
     console.warn("Could not close tab after saving image:", error);
   }
-}
-
-async function ensureDefaults() {
-  const current = await browser.storage.local.get(DEFAULTS);
-  await browser.storage.local.set({ ...DEFAULTS, ...current });
 }
 
 async function getOptions() {

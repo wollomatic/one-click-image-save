@@ -20,6 +20,11 @@ const conflictActions = [...document.querySelectorAll('input[name="conflictActio
 const closeTab = document.querySelector("#close-tab");
 const status = document.querySelector("#status");
 const extensionVersion = document.querySelector("#extension-version");
+const manageSettings = document.querySelector("#manage-settings");
+const settingsDialog = document.querySelector("#settings-dialog");
+const settingsSummary = document.querySelector("#settings-summary");
+const settingsContent = document.querySelector("#settings-content");
+const deleteSettings = document.querySelector("#delete-settings");
 let saveTimeout;
 let clearStatusTimeout;
 
@@ -54,6 +59,8 @@ for (const control of [
 }
 
 domainSubfolder.addEventListener("change", updateDependentControls);
+manageSettings.addEventListener("click", openSettingsDialog);
+deleteSettings.addEventListener("click", deleteSavedSettings);
 
 function getOptions() {
   return {
@@ -77,11 +84,74 @@ async function saveOptions() {
   clearTimeout(saveTimeout);
 
   try {
-    await browser.storage.local.set(getOptions());
+    await saveChangedOptions(getOptions());
     showStatus("Options autosaved.");
   } catch (error) {
     console.error("Could not save options:", error);
     showStatus("Could not autosave options.");
+  }
+}
+
+async function saveChangedOptions(options) {
+  const changedOptions = Object.fromEntries(
+    Object.entries(options).filter(([key, value]) => value !== DEFAULTS[key])
+  );
+
+  await browser.storage.local.remove(Object.keys(DEFAULTS));
+
+  if (Object.keys(changedOptions).length > 0) {
+    await browser.storage.local.set(changedOptions);
+  }
+}
+
+async function openSettingsDialog(event) {
+  event.preventDefault();
+
+  await refreshStoredSettings();
+  settingsDialog.showModal();
+}
+
+async function refreshStoredSettings() {
+  try {
+    const savedSettings = await browser.storage.local.get(null);
+    const savedEntries = Object.entries(savedSettings);
+
+    if (savedEntries.length === 0) {
+      settingsSummary.textContent = "No saved settings are currently stored in this browser.";
+      settingsContent.textContent = "";
+      settingsContent.hidden = true;
+      deleteSettings.disabled = true;
+      return;
+    }
+
+    settingsSummary.textContent = `${savedEntries.length} saved setting${savedEntries.length === 1 ? "" : "s"} currently stored in this browser:`;
+    settingsContent.textContent = JSON.stringify(savedSettings, null, 2);
+    settingsContent.hidden = false;
+    deleteSettings.disabled = false;
+  } catch (error) {
+    console.error("Could not read saved settings:", error);
+    settingsSummary.textContent = "Could not read saved browser settings.";
+    settingsContent.textContent = "";
+    settingsContent.hidden = true;
+    deleteSettings.disabled = true;
+  }
+}
+
+async function deleteSavedSettings() {
+  if (!confirm("Remove all saved One Click Image Save settings from this browser?")) {
+    return;
+  }
+
+  clearTimeout(saveTimeout);
+
+  try {
+    await browser.storage.local.clear();
+    await loadOptions();
+    await refreshStoredSettings();
+    showStatus("Saved settings removed.");
+  } catch (error) {
+    console.error("Could not remove saved settings:", error);
+    showStatus("Could not remove saved settings.");
   }
 }
 

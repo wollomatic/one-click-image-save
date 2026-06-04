@@ -73,17 +73,39 @@
       </form>
 
       <footer class="page-footer">
-        <a href="https://codeberg.org/wollomatic/one-click-image-save" target="_blank" rel="noopener noreferrer">
+        <a href="https://codeberg.org/wollomatic/one-click-image-save" target="_blank" rel="noopener noreferrer" title="Link to the source code on Codeberg.">
           Repository
         </a>
         |
-        <a href="https://codeberg.org/wollomatic/one-click-image-save/src/branch/main/LICENSE" target="_blank" rel="noopener noreferrer">
+        <a href="https://codeberg.org/wollomatic/one-click-image-save/src/branch/main/LICENSE" target="_blank" rel="noopener noreferrer" title="One Click Image Save is licensed under the MIT license.">
           MIT License
         </a>
         |
-        <span id="extension-version">version</span>
+        <span id="extension-version" title="One Click Image Save by wollomatic">version</span>
+        |
+        <a id="manage-settings" href="#" title="Show all saved data with the option to delete the persisted settings.">view and delete saved settings</a>
       </footer>
     </main>
+
+    <dialog id="settings-dialog" aria-labelledby="settings-dialog-title">
+      <form method="dialog" class="settings-dialog-card">
+        <header class="settings-dialog-header">
+          <h2 id="settings-dialog-title">Saved browser settings</h2>
+          <button class="dialog-close" value="cancel" aria-label="Close">x</button>
+        </header>
+
+        <p class="settings-explanation">
+          Settings are stored in this browser's extension storage. One Click Image Save only persists values that differ from the default configuration; default values are omitted from storage and used automatically at runtime.
+        </p>
+        <p id="settings-summary" class="settings-summary"></p>
+        <pre id="settings-content" class="settings-content"></pre>
+
+        <footer class="settings-dialog-actions">
+          <button id="delete-settings" class="danger-button" type="button">Delete saved settings</button>
+          <button class="secondary-button" value="cancel">Close</button>
+        </footer>
+      </form>
+    </dialog>
 
     <script src="options.js"></script>
   </body>
