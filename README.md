@@ -1,5 +1,8 @@
 # One Click Image Save
 
+> Get it on Firefox add-ons:  
+> https://addons.mozilla.org/firefox/addon/one-click-image-save/
+
 A lightweight Firefox extension that adds a **Save image** entry to the image context menu and downloads images instantly without showing the file picker.
 
 Supports desktop Firefox. Firefox for Android is not supported because it does not provide the extension context menu and downloads APIs this add-on depends on.
@@ -30,13 +33,13 @@ Custom subfolders are supported, but arbitrary absolute filesystem paths are not
 Install the helper:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Run in Firefox:
 
 ```bash
-npm run start
+pnpm run start
 ```
 
 Or load manually:
@@ -49,7 +52,7 @@ Or load manually:
 ## Package
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 This creates a ZIP file in `web-ext-artifacts/`.
