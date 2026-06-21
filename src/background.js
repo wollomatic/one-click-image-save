@@ -41,7 +41,7 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
 
   try {
     const options = await getOptions();
-    const saved = await saveImage(info.srcUrl, options);
+    const saved = await saveImage(info, tab, options);
 
     if (saved && options.closeTab && typeof tab?.id === "number") {
       await closeTab(tab.id);
@@ -73,7 +73,9 @@ function createContextMenu() {
   return menuSetup;
 }
 
-async function saveImage(srcUrl, options) {
+async function saveImage(info, tab, options) {
+  const srcUrl = info.srcUrl;
+
   if (!isAllowedImageUrl(srcUrl)) {
     throw new Error(`Unsupported image URL scheme: ${safeUrlForLog(srcUrl)}`);
   }
@@ -84,21 +86,37 @@ async function saveImage(srcUrl, options) {
     return false;
   }
 
-  await browser.downloads.download({
+  await browser.downloads.download(buildDownloadOptions(srcUrl, filename, info, tab, options));
+
+  return true;
+}
+
+function buildDownloadOptions(srcUrl, filename, info, tab, options) {
+  const downloadOptions = {
     url: srcUrl,
     filename,
     saveAs: false,
     conflictAction: downloadConflictAction(options.conflictAction)
-  });
+  };
 
-  return true;
+  const referer = downloadReferer(srcUrl, info);
+
+  if (referer) {
+    downloadOptions.headers = [{ name: "Referer", value: referer }];
+  }
+
+  if (tab?.incognito) {
+    downloadOptions.incognito = true;
+  }
+
+  return downloadOptions;
 }
 
 function isAllowedImageUrl(srcUrl) {
   try {
     const url = new URL(srcUrl);
 
-    if (url.protocol === "http:" || url.protocol === "https:") {
+    if (isHttpUrl(srcUrl)) {
       return true;
     }
 
@@ -106,6 +124,52 @@ function isAllowedImageUrl(srcUrl) {
   } catch {
     return false;
   }
+}
+
+function downloadReferer(srcUrl, info) {
+  const imageUrl = parseHttpUrl(srcUrl);
+  const documentUrl = parseHttpUrl(info.frameUrl) || parseHttpUrl(info.pageUrl);
+
+  if (!imageUrl || !documentUrl) {
+    return null;
+  }
+
+  if (documentUrl.protocol === "https:" && imageUrl.protocol === "http:") {
+    return null;
+  }
+
+  if (documentUrl.origin === imageUrl.origin) {
+    return sameOriginReferer(documentUrl);
+  }
+
+  return `${documentUrl.origin}/`;
+}
+
+function sameOriginReferer(url) {
+  const referer = new URL(url.href);
+  referer.username = "";
+  referer.password = "";
+  referer.hash = "";
+
+  return referer.href;
+}
+
+function isHttpUrl(value) {
+  return Boolean(parseHttpUrl(value));
+}
+
+function parseHttpUrl(value) {
+  try {
+    const url = new URL(value);
+
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return url;
+    }
+  } catch {
+    // Ignore invalid URLs.
+  }
+
+  return null;
 }
 
 function safeUrlForLog(srcUrl) {
