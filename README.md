@@ -31,6 +31,10 @@ Custom subfolders are supported, but arbitrary absolute filesystem paths are not
 
 ### Changelog
 
+#### 0.3.1
+
+* Improved compatibility with websites requiring a referrer.
+
 #### 0.3.0
 
 * Store only non-default settings.
