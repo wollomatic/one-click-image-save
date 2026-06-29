@@ -5,7 +5,7 @@
   "scripts": {
     "start": "web-ext run --source-dir .",
     "lint": "web-ext lint --source-dir .",
-    "build": "web-ext build --source-dir . --overwrite-dest --ignore-files screenshots screenshots/**/*"
+    "build": "web-ext build --source-dir . --overwrite-dest --ignore-files screenshots screenshots/**/* package.json pnpm-lock.yaml pnpm-workspace.yaml README.md"
   },
   "pnpm": {
     "overrides": {
