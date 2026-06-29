@@ -249,7 +249,7 @@ function normalizeAccessKey(value) {
 }
 
 function buildDownloadFilename(srcUrl, options) {
-  const folder = sanitizeFolderPath(options.targetFolder || DEFAULTS.targetFolder);
+  const folder = PathUtils.sanitizeFolderPath(options.targetFolder);
   const folderParts = [folder];
   const originalName = getOriginalFilename(srcUrl);
   const safeOriginalName = sanitizeFilename(originalName);
@@ -371,14 +371,6 @@ function truncateFilename(filename, maxLength) {
   const basename = cleanPathComponent(filename.slice(0, maxLength - extension.length)) || "image";
 
   return `${basename}${extension}`;
-}
-
-function sanitizeFolderPath(path) {
-  return String(path ?? "")
-    .split("/")
-    .map((part) => cleanPathComponent(part))
-    .filter(Boolean)
-    .join("/") || DEFAULTS.targetFolder;
 }
 
 function domainName(srcUrl) {

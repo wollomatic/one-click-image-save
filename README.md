@@ -19,7 +19,7 @@ One Click Image Save supports desktop Firefox 140 and newer.
 - Right-click an image and select *Save image*
 - Downloads start immediately without a save dialog
 - Configurable keyboard access key for the context menu entry
-- Configurable target folder inside your Firefox downloads directory
+- Configurable target folder inside your Firefox downloads directory, or save directly to the downloads directory
 - Optional website domain subfolders, with either registered domain or full hostname
 - Optional filename prefixes based on website domain and timestamp
 - Configurable handling for filename conflicts: create a unique name, overwrite, or skip
@@ -33,18 +33,25 @@ One Click Image Save supports desktop Firefox 140 and newer.
 
 1. Right-click an image.
 2. Select **Save image** (either per mouse or keyboard shortcut).
-3. The image is saved to the configured subfolder inside your Firefox downloads directory.
+3. The image is saved to the configured location inside your Firefox downloads directory.
 
-Open the extension options page from the toolbar button or Firefox's add-ons manager to change the target folder, filename behavior, conflict handling, and saved settings.
+Open the extension options page from the toolbar button or Firefox's add-ons manager to change the target folder, filename behavior, conflict handling, and saved settings. Leave the target folder empty to save directly to Firefox's downloads directory; folder names such as `.images` are supported for hidden directories on Linux. Backslashes are converted to forward slashes because Firefox expects download paths as relative paths such as `Saved Images/example.jpg`.
 
 ## Limitations
 
 Due to Firefox extension restrictions, downloads can only be saved within Firefox's configured download directory.
-Custom subfolders are supported, but arbitrary absolute filesystem paths are not.
+Custom relative subfolders are supported, but arbitrary absolute filesystem paths are not.
 
 Firefox for Android is not supported.
 
 ## Changelog
+
+#### 0.4.0
+
+* Added support for saving directly to Firefox's downloads directory by leaving the target folder empty.
+* Allowed dot-prefixed target folders such as `.images` for hidden directories on Linux.
+* Clarified that backslashes in target folders are converted to forward slashes for Firefox download paths.
+* Added unit tests for target-folder path normalization and sanitation.
 
 #### 0.3.2
 
@@ -76,6 +83,12 @@ Run in Firefox:
 
 ```bash
 pnpm run start
+```
+
+Run unit tests:
+
+```bash
+pnpm test
 ```
 
 Or load manually:

@@ -186,20 +186,7 @@ function updateDependentControls() {
 }
 
 function normalizeFolder(value) {
-  const folder = String(value ?? "")
-    .replace(/\\/g, "/")
-    .split("/")
-    .map(normalizeFolderPart)
-    .filter(Boolean)
-    .join("/");
-
-  return folder || DEFAULTS.targetFolder;
-}
-
-function normalizeFolderPart(part) {
-  return part
-    .replace(/^[.\s]+|[.\s]+$/g, "")
-    .replace(/[\\:*?"<>|]/g, "_");
+  return PathUtils.sanitizeFolderPath(value);
 }
 
 function normalizeAccessKey(value) {
