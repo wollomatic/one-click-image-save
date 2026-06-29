@@ -186,12 +186,20 @@ function updateDependentControls() {
 }
 
 function normalizeFolder(value) {
-  return value
+  const folder = String(value ?? "")
     .replace(/\\/g, "/")
     .split("/")
-    .map((part) => part.trim().replace(/[\\:*?"<>|]/g, "_"))
+    .map(normalizeFolderPart)
     .filter(Boolean)
-    .join("/") || DEFAULTS.targetFolder;
+    .join("/");
+
+  return folder || DEFAULTS.targetFolder;
+}
+
+function normalizeFolderPart(part) {
+  return part
+    .replace(/^[.\s]+|[.\s]+$/g, "")
+    .replace(/[\\:*?"<>|]/g, "_");
 }
 
 function normalizeAccessKey(value) {

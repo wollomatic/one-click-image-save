@@ -249,7 +249,7 @@ function normalizeAccessKey(value) {
 }
 
 function buildDownloadFilename(srcUrl, options) {
-  const folder = sanitizePathSegment(options.targetFolder || DEFAULTS.targetFolder);
+  const folder = sanitizeFolderPath(options.targetFolder || DEFAULTS.targetFolder);
   const folderParts = [folder];
   const originalName = getOriginalFilename(srcUrl);
   const safeOriginalName = sanitizeFilename(originalName);
@@ -281,7 +281,7 @@ function getOriginalFilename(srcUrl) {
       return `image-${timestamp()}.${dataImageExtension}`;
     }
 
-    const lastSegment = decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() || "");
+    const lastSegment = decodePathSegment(url.pathname.split("/").filter(Boolean).pop() || "");
     const candidate = lastSegment || "image";
 
     if (hasUsefulExtension(candidate)) {
@@ -292,6 +292,14 @@ function getOriginalFilename(srcUrl) {
     return `${candidate}.${guessed}`;
   } catch {
     return `image-${timestamp()}.jpg`;
+  }
+}
+
+function decodePathSegment(segment) {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
   }
 }
 
@@ -332,19 +340,21 @@ function normalizeImageExtension(extension) {
 }
 
 function sanitizeFilename(filename) {
-  const clean = filename
-    .replace(/[\\/:*?"<>|]/g, "_")
-    .replace(/[\u0000-\u001f\u007f]/g, "")
-    .replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^\.+$/, "image");
+  const clean = cleanPathComponent(filename);
 
   if (!clean) {
     return `image-${timestamp()}.jpg`;
   }
 
   return truncateFilename(clean, 180);
+}
+
+function cleanPathComponent(value) {
+  return String(value ?? "")
+    .replace(/[\\/:*?"<>|]/g, "_")
+    .replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/^[.\s]+|[.\s]+$/g, "");
 }
 
 function truncateFilename(filename, maxLength) {
@@ -355,23 +365,20 @@ function truncateFilename(filename, maxLength) {
   const extension = filename.match(/\.(avif|bmp|gif|jpe?g|png|svg|webp|tiff?)$/i)?.[0] || "";
 
   if (!extension || extension.length >= maxLength) {
-    return filename.slice(0, maxLength).trim() || "image";
+    return cleanPathComponent(filename.slice(0, maxLength)) || "image";
   }
 
-  const basename = filename
-    .slice(0, maxLength - extension.length)
-    .trim()
-    .replace(/^\.+$/, "image") || "image";
+  const basename = cleanPathComponent(filename.slice(0, maxLength - extension.length)) || "image";
 
   return `${basename}${extension}`;
 }
 
-function sanitizePathSegment(path) {
-  return path
+function sanitizeFolderPath(path) {
+  return String(path ?? "")
     .split("/")
-    .map((part) => sanitizeFilename(part))
+    .map((part) => cleanPathComponent(part))
     .filter(Boolean)
-    .join("/");
+    .join("/") || DEFAULTS.targetFolder;
 }
 
 function domainName(srcUrl) {
