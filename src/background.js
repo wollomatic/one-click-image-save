@@ -5,6 +5,7 @@ const DEFAULTS = {
   prefixDomain: false,
   prefixTimestamp: false,
   conflictAction: "uniquify",
+  sendReferer: false,
   closeTab: false,
   menuAccessKey: "i"
 };
@@ -77,7 +78,7 @@ async function saveImage(info, tab, options) {
   const srcUrl = info.srcUrl;
 
   if (!isAllowedImageUrl(srcUrl)) {
-    throw new Error(`Unsupported image URL scheme: ${safeUrlForLog(srcUrl)}`);
+    throw new Error(`Unsupported image URL scheme: ${PrivacyUtils.safeUrlForLog(srcUrl)}`);
   }
 
   const filename = buildDownloadFilename(srcUrl, options);
@@ -99,10 +100,10 @@ function buildDownloadOptions(srcUrl, filename, info, tab, options) {
     conflictAction: downloadConflictAction(options.conflictAction)
   };
 
-  const referer = downloadReferer(srcUrl, info);
+  const headers = PrivacyUtils.buildRefererHeaders(srcUrl, info, options.sendReferer);
 
-  if (referer) {
-    downloadOptions.headers = [{ name: "Referer", value: referer }];
+  if (headers) {
+    downloadOptions.headers = headers;
   }
 
   if (tab?.incognito) {
@@ -126,54 +127,13 @@ function isAllowedImageUrl(srcUrl) {
   }
 }
 
-function downloadReferer(srcUrl, info) {
-  const imageUrl = parseHttpUrl(srcUrl);
-  const documentUrl = parseHttpUrl(info.frameUrl) || parseHttpUrl(info.pageUrl);
-
-  if (!imageUrl || !documentUrl) {
-    return null;
-  }
-
-  if (documentUrl.protocol === "https:" && imageUrl.protocol === "http:") {
-    return null;
-  }
-
-  if (documentUrl.origin === imageUrl.origin) {
-    return sameOriginReferer(documentUrl);
-  }
-
-  return `${documentUrl.origin}/`;
-}
-
-function sameOriginReferer(url) {
-  const referer = new URL(url.href);
-  referer.username = "";
-  referer.password = "";
-  referer.hash = "";
-
-  return referer.href;
-}
-
 function isHttpUrl(value) {
-  return Boolean(parseHttpUrl(value));
-}
-
-function parseHttpUrl(value) {
   try {
     const url = new URL(value);
-
-    if (url.protocol === "http:" || url.protocol === "https:") {
-      return url;
-    }
+    return url.protocol === "http:" || url.protocol === "https:";
   } catch {
-    // Ignore invalid URLs.
+    return false;
   }
-
-  return null;
-}
-
-function safeUrlForLog(srcUrl) {
-  return String(srcUrl).slice(0, 120).replace(/[\u0000-\u001f\u007f]/g, "");
 }
 
 async function downloadExists(filename) {
@@ -217,6 +177,7 @@ async function getOptions() {
   }
 
   normalized.menuAccessKey = normalizeAccessKey(normalized.menuAccessKey);
+  normalized.sendReferer = normalized.sendReferer === true;
 
   return normalized;
 }

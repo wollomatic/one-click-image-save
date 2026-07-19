@@ -23,6 +23,7 @@ One Click Image Save supports desktop Firefox 140 and newer.
 - Optional website domain subfolders, with either registered domain or full hostname
 - Optional filename prefixes based on website domain and timestamp
 - Configurable handling for filename conflicts: create a unique name, overwrite, or skip
+- Optional reduced page referrer for compatibility with image servers that require it (disabled by default)
 - Optional automatic tab closing after the download starts
 - Support for HTTP, HTTPS, and `data:image/...` image URLs
 - Transparent saved-settings view with one-click deletion
@@ -42,6 +43,8 @@ Open the extension options page from the toolbar button or Firefox's add-ons man
 Due to Firefox extension restrictions, downloads can only be saved within Firefox's configured download directory.
 Custom relative subfolders are supported, but arbitrary absolute filesystem paths are not.
 
+The extension does not send a page referrer by default. If an image server rejects a download, the compatibility option can send a reduced referrer: credentials, query parameters, and fragments are removed, and cross-origin targets receive only the source website's origin. Enabling it reveals the source website to the image server.
+
 To keep permissions to a minimum, the extension does not request access to cookies. As a result, saving some images from Firefox container tabs may not work, especially when a login is required. In these cases, use Firefox's built-in **Save Image As** action.
 
 Firefox for Android is not supported.
@@ -51,6 +54,7 @@ Firefox for Android is not supported.
 #### Unreleased
 
 * Update and pin the development toolchain and resolve known dependency advisories.
+* Make referrer transmission opt-in and redact sensitive URL components from diagnostics.
 
 #### 0.4.0
 

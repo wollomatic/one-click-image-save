@@ -5,6 +5,7 @@ const DEFAULTS = {
   prefixDomain: false,
   prefixTimestamp: false,
   conflictAction: "uniquify",
+  sendReferer: false,
   closeTab: false,
   menuAccessKey: "i"
 };
@@ -17,6 +18,7 @@ const prefixDomain = document.querySelector("#prefix-domain");
 const prefixTimestamp = document.querySelector("#prefix-timestamp");
 const menuAccessKey = document.querySelector("#menu-access-key");
 const conflictActions = [...document.querySelectorAll('input[name="conflictAction"]')];
+const sendReferer = document.querySelector("#send-referer");
 const closeTab = document.querySelector("#close-tab");
 const status = document.querySelector("#status");
 const extensionVersion = document.querySelector("#extension-version");
@@ -53,6 +55,7 @@ for (const control of [
   prefixDomain,
   prefixTimestamp,
   ...conflictActions,
+  sendReferer,
   closeTab
 ]) {
   control.addEventListener("change", saveOptions);
@@ -70,6 +73,7 @@ function getOptions() {
     prefixDomain: prefixDomain.checked,
     prefixTimestamp: prefixTimestamp.checked,
     conflictAction: selectedConflictAction(),
+    sendReferer: sendReferer.checked,
     closeTab: closeTab.checked,
     menuAccessKey: normalizeAccessKey(menuAccessKey.value)
   };
@@ -177,6 +181,7 @@ async function loadOptions() {
   prefixTimestamp.checked = options.prefixTimestamp;
   menuAccessKey.value = normalizeAccessKey(options.menuAccessKey);
   setConflictAction(options.conflictAction);
+  sendReferer.checked = options.sendReferer;
   closeTab.checked = options.closeTab;
   updateDependentControls();
 }
