@@ -51,15 +51,12 @@ Firefox for Android is not supported.
 
 ## Changelog
 
-#### 0.5.0
+#### 1.0.0
 
 * Update and pin the development toolchain and resolve known dependency advisories.
 * Stop logging URLs to the local browser console.
 * Make referrer transmission opt-in.
 * Explain the new privacy-first referrer default to existing users once after updating.
-
-#### 0.4.0
-
 * Added support for saving directly to Firefox's downloads directory by leaving the target folder empty.
 * Allowed dot-prefixed target folders such as `.images` for hidden directories on Linux.
 * Clarified that backslashes in target folders are converted to forward slashes for Firefox download paths.

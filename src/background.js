@@ -64,11 +64,11 @@ async function initialize() {
 async function handleInstalled(details) {
   await initialize();
 
-  // Version 0.5.0 changed the default; later updates must not reopen the options page.
+  // Version 1.0.0 changed the default; later updates must not reopen the options page.
   if (
     details.reason !== "update" ||
     details.temporary === true ||
-    browser.runtime.getManifest().version !== "0.5.0"
+    browser.runtime.getManifest().version !== "1.0.0"
   ) {
     return;
   }
