@@ -9,6 +9,7 @@ const DEFAULTS = {
   closeTab: false,
   menuAccessKey: "i"
 };
+const UPDATE_NOTICE_KEY = "pendingUpdateNotice";
 
 const form = document.querySelector("#options-form");
 const targetFolder = document.querySelector("#target-folder");
@@ -27,6 +28,8 @@ const settingsDialog = document.querySelector("#settings-dialog");
 const settingsSummary = document.querySelector("#settings-summary");
 const settingsContent = document.querySelector("#settings-content");
 const deleteSettings = document.querySelector("#delete-settings");
+const updateNotice = document.querySelector("#update-notice");
+const dismissUpdateNoticeButton = document.querySelector("#dismiss-update-notice");
 let saveTimeout;
 let clearStatusTimeout;
 
@@ -64,6 +67,7 @@ for (const control of [
 domainSubfolder.addEventListener("change", updateDependentControls);
 manageSettings.addEventListener("click", openSettingsDialog);
 deleteSettings.addEventListener("click", deleteSavedSettings);
+dismissUpdateNoticeButton.addEventListener("click", dismissUpdateNotice);
 
 function getOptions() {
   return {
@@ -159,6 +163,19 @@ async function deleteSavedSettings() {
   }
 }
 
+async function dismissUpdateNotice() {
+  dismissUpdateNoticeButton.disabled = true;
+  try {
+    await browser.storage.local.remove(UPDATE_NOTICE_KEY);
+    updateNotice.hidden = true;
+    showStatus("Privacy update acknowledged.");
+  } catch (error) {
+    dismissUpdateNoticeButton.disabled = false;
+    console.error("Could not dismiss privacy update:", error);
+    showStatus("Could not dismiss the privacy update.");
+  }
+}
+
 function showStatus(message) {
   clearTimeout(clearStatusTimeout);
   status.textContent = message;
@@ -172,7 +189,10 @@ function setVersionInfo() {
 }
 
 async function loadOptions() {
-  const options = await browser.storage.local.get(DEFAULTS);
+  const options = await browser.storage.local.get({
+    ...DEFAULTS,
+    [UPDATE_NOTICE_KEY]: false
+  });
 
   targetFolder.value = options.targetFolder;
   domainSubfolder.checked = options.domainSubfolder;
@@ -181,8 +201,10 @@ async function loadOptions() {
   prefixTimestamp.checked = options.prefixTimestamp;
   menuAccessKey.value = normalizeAccessKey(options.menuAccessKey);
   setConflictAction(options.conflictAction);
-  sendReferer.checked = options.sendReferer;
+  sendReferer.checked = options.sendReferer === true;
   closeTab.checked = options.closeTab;
+  updateNotice.hidden = options[UPDATE_NOTICE_KEY] !== true;
+  dismissUpdateNoticeButton.disabled = false;
   updateDependentControls();
 }
 

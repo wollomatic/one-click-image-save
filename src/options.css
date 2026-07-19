@@ -154,6 +154,43 @@ form::before {
   content: "";
 }
 
+.update-notice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid rgba(50, 246, 255, 0.3);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  background: rgba(50, 246, 255, 0.07);
+}
+
+.update-notice[hidden] {
+  display: none;
+}
+
+.update-notice > div {
+  flex: 1 1 420px;
+}
+
+.update-notice h2 {
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.update-notice p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.update-notice a {
+  color: var(--accent);
+}
+
 .field {
   display: grid;
   gap: 9px;
@@ -498,6 +535,7 @@ button:disabled {
     align-items: stretch;
     flex-direction: column;
   }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

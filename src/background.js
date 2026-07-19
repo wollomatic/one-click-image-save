@@ -12,11 +12,16 @@ const DEFAULTS = {
 
 const MENU_ID_SAVE = "one-click-image-save";
 const LEGACY_MENU_IDS = ["one-click-image-save-and-close"];
+const UPDATE_NOTICE_KEY = "pendingUpdateNotice";
 const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite", "skip"]);
 const IMAGE_EXTENSIONS = new Set(["avif", "bmp", "gif", "jpg", "jpeg", "png", "svg", "webp", "tif", "tiff"]);
 let menuSetup = Promise.resolve();
 
-browser.runtime.onInstalled.addListener(() => initialize());
+browser.runtime.onInstalled.addListener((details) => {
+  handleInstalled(details).catch((error) => {
+    console.error("Could not finish extension update setup:", error);
+  });
+});
 
 browser.runtime.onStartup.addListener(() => initialize());
 
@@ -54,6 +59,22 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
 
 async function initialize() {
   await createContextMenu();
+}
+
+async function handleInstalled(details) {
+  await initialize();
+
+  // Version 0.5.0 changed the default; later updates must not reopen the options page.
+  if (
+    details.reason !== "update" ||
+    details.temporary === true ||
+    browser.runtime.getManifest().version !== "0.5.0"
+  ) {
+    return;
+  }
+
+  await browser.storage.local.set({ [UPDATE_NOTICE_KEY]: true });
+  await browser.runtime.openOptionsPage();
 }
 
 function createContextMenu() {

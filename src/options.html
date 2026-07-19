@@ -12,6 +12,16 @@
       </header>
 
       <form id="options-form">
+        <section id="update-notice" class="update-notice" aria-labelledby="update-notice-title" hidden>
+          <div>
+            <h2 id="update-notice-title">Page referrer sending behavior changed</h2>
+            <p>
+              A page referrer tells an image server which website a download came from. This can improve compatibility, but it also reveals the source website, so referrers are now disabled by default. If a website rejects a download, enable the checkbox <a href="#send-referer">Send page referrer for download compatibility</a> below.
+            </p>
+          </div>
+          <button id="dismiss-update-notice" type="button">Got it</button>
+        </section>
+
         <label class="field" title="Choose a relative subfolder inside your browser´s downloads folder, or leave empty to save directly in the downloads folder. Folder names starting with a dot are allowed. Backslashes are converted to forward slashes because Firefox expects relative download paths. Absolute paths outside the downloads folder are not supported for security reasons.">
           <span>Target folder</span>
           <input id="target-folder" name="targetFolder" type="text" autocomplete="off" placeholder="Saved Images" title="Choose a relative subfolder inside your browser´s downloads folder, or leave empty to save directly in the downloads folder. Folder names starting with a dot are allowed. Backslashes are converted to forward slashes because Firefox expects relative download paths. Absolute paths outside the downloads folder are not supported for security reasons.">
@@ -63,8 +73,8 @@
             </label>
           </fieldset>
 
-          <label class="checkbox" title="Send a reduced page referrer with HTTP and HTTPS downloads for compatibility with image servers that require it. Disabled by default because it reveals the source website to the image server. Credentials, query parameters, and fragments are never included.">
-            <input id="send-referer" name="sendReferer" type="checkbox" title="Send a reduced page referrer with HTTP and HTTPS downloads for compatibility with image servers that require it. Disabled by default because it reveals the source website to the image server. Credentials, query parameters, and fragments are never included.">
+          <label class="checkbox" title="Send a reduced page referrer with HTTP and HTTPS downloads for compatibility with image servers that require it. Disabled by default because it reveals the source website and can override a stricter website referrer policy. Credentials, query parameters, and fragments are never included.">
+            <input id="send-referer" name="sendReferer" type="checkbox" title="Send a reduced page referrer with HTTP and HTTPS downloads for compatibility with image servers that require it. Disabled by default because it reveals the source website and can override a stricter website referrer policy. Credentials, query parameters, and fragments are never included.">
             <span>Send page referrer for download compatibility</span>
           </label>
 

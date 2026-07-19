@@ -51,10 +51,11 @@ Firefox for Android is not supported.
 
 ## Changelog
 
-#### Unreleased
+#### 0.5.0
 
 * Update and pin the development toolchain and resolve known dependency advisories.
 * Make referrer transmission opt-in and redact sensitive URL components from diagnostics.
+* Explain the new privacy-first referrer default to existing users once after updating, with a link to the compatibility setting.
 
 #### 0.4.0
 
@@ -107,6 +108,23 @@ Or load manually:
 2. Click **This Firefox**
 3. Click **Load Temporary Add-on**
 4. Select `manifest.json`
+
+### Test the referrer update notice
+
+To display the one-time update notice during development:
+
+1. Open the extension options page.
+2. Open the page's developer tools with `F12` and select the console.
+3. Run:
+
+   ```js
+   await browser.storage.local.set({
+     pendingUpdateNotice: true
+   });
+   location.reload();
+   ```
+
+The notice disappears after clicking **Got it**. Run the snippet again to repeat the test.
 
 ## Package
 
