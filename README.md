@@ -42,9 +42,15 @@ Open the extension options page from the toolbar button or Firefox's add-ons man
 Due to Firefox extension restrictions, downloads can only be saved within Firefox's configured download directory.
 Custom relative subfolders are supported, but arbitrary absolute filesystem paths are not.
 
+To keep permissions to a minimum, the extension does not request access to cookies. As a result, saving some images from Firefox container tabs may not work, especially when a login is required. In these cases, use Firefox's built-in **Save Image As** action.
+
 Firefox for Android is not supported.
 
 ## Changelog
+
+#### Unreleased
+
+* Update and pin the development toolchain and resolve known dependency advisories.
 
 #### 0.4.0
 
