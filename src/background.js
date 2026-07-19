@@ -52,8 +52,8 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
     if (saved && options.closeTab && typeof tab?.id === "number") {
       await closeTab(tab.id);
     }
-  } catch (error) {
-    console.error("Could not save image:", error);
+  } catch {
+    console.error("Could not save image.");
   }
 });
 
@@ -99,7 +99,7 @@ async function saveImage(info, tab, options) {
   const srcUrl = info.srcUrl;
 
   if (!isAllowedImageUrl(srcUrl)) {
-    throw new Error(`Unsupported image URL scheme: ${PrivacyUtils.safeUrlForLog(srcUrl)}`);
+    throw new Error("Unsupported image URL scheme.");
   }
 
   const filename = buildDownloadFilename(srcUrl, options);

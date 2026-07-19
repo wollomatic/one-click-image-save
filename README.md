@@ -54,8 +54,9 @@ Firefox for Android is not supported.
 #### 0.5.0
 
 * Update and pin the development toolchain and resolve known dependency advisories.
-* Make referrer transmission opt-in and redact sensitive URL components from diagnostics.
-* Explain the new privacy-first referrer default to existing users once after updating, with a link to the compatibility setting.
+* Stop logging URLs to the local browser console.
+* Make referrer transmission opt-in.
+* Explain the new privacy-first referrer default to existing users once after updating.
 
 #### 0.4.0
 
