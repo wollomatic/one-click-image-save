@@ -6,10 +6,10 @@ const DEFAULTS = {
   prefixTimestamp: false,
   conflictAction: "uniquify",
   sendReferer: false,
+  refererMode: "retry",
   closeTab: false,
   menuAccessKey: "i"
 };
-const UPDATE_NOTICE_KEY = "pendingUpdateNotice";
 
 const form = document.querySelector("#options-form");
 const targetFolder = document.querySelector("#target-folder");
@@ -20,6 +20,8 @@ const prefixTimestamp = document.querySelector("#prefix-timestamp");
 const menuAccessKey = document.querySelector("#menu-access-key");
 const conflictActions = [...document.querySelectorAll('input[name="conflictAction"]')];
 const sendReferer = document.querySelector("#send-referer");
+const refererModeGroup = document.querySelector("#referer-mode-group");
+const refererModes = [...document.querySelectorAll('input[name="refererMode"]')];
 const closeTab = document.querySelector("#close-tab");
 const status = document.querySelector("#status");
 const extensionVersion = document.querySelector("#extension-version");
@@ -28,8 +30,6 @@ const settingsDialog = document.querySelector("#settings-dialog");
 const settingsSummary = document.querySelector("#settings-summary");
 const settingsContent = document.querySelector("#settings-content");
 const deleteSettings = document.querySelector("#delete-settings");
-const updateNotice = document.querySelector("#update-notice");
-const dismissUpdateNoticeButton = document.querySelector("#dismiss-update-notice");
 let saveTimeout;
 let clearStatusTimeout;
 
@@ -59,15 +59,17 @@ for (const control of [
   prefixTimestamp,
   ...conflictActions,
   sendReferer,
+  ...refererModes,
   closeTab
 ]) {
   control.addEventListener("change", saveOptions);
 }
 
 domainSubfolder.addEventListener("change", updateDependentControls);
+prefixDomain.addEventListener("change", updateDependentControls);
+sendReferer.addEventListener("change", updateDependentControls);
 manageSettings.addEventListener("click", openSettingsDialog);
 deleteSettings.addEventListener("click", deleteSavedSettings);
-dismissUpdateNoticeButton.addEventListener("click", dismissUpdateNotice);
 
 function getOptions() {
   return {
@@ -78,6 +80,7 @@ function getOptions() {
     prefixTimestamp: prefixTimestamp.checked,
     conflictAction: selectedConflictAction(),
     sendReferer: sendReferer.checked,
+    refererMode: selectedRefererMode(),
     closeTab: closeTab.checked,
     menuAccessKey: normalizeAccessKey(menuAccessKey.value)
   };
@@ -163,19 +166,6 @@ async function deleteSavedSettings() {
   }
 }
 
-async function dismissUpdateNotice() {
-  dismissUpdateNoticeButton.disabled = true;
-  try {
-    await browser.storage.local.remove(UPDATE_NOTICE_KEY);
-    updateNotice.hidden = true;
-    showStatus("Privacy update acknowledged.");
-  } catch (error) {
-    dismissUpdateNoticeButton.disabled = false;
-    console.error("Could not dismiss privacy update:", error);
-    showStatus("Could not dismiss the privacy update.");
-  }
-}
-
 function showStatus(message) {
   clearTimeout(clearStatusTimeout);
   status.textContent = message;
@@ -189,10 +179,7 @@ function setVersionInfo() {
 }
 
 async function loadOptions() {
-  const options = await browser.storage.local.get({
-    ...DEFAULTS,
-    [UPDATE_NOTICE_KEY]: false
-  });
+  const options = await browser.storage.local.get(DEFAULTS);
 
   targetFolder.value = options.targetFolder;
   domainSubfolder.checked = options.domainSubfolder;
@@ -202,14 +189,14 @@ async function loadOptions() {
   menuAccessKey.value = normalizeAccessKey(options.menuAccessKey);
   setConflictAction(options.conflictAction);
   sendReferer.checked = options.sendReferer === true;
+  setRefererMode(options.refererMode);
   closeTab.checked = options.closeTab;
-  updateNotice.hidden = options[UPDATE_NOTICE_KEY] !== true;
-  dismissUpdateNoticeButton.disabled = false;
   updateDependentControls();
 }
 
 function updateDependentControls() {
-  completeHostname.disabled = !domainSubfolder.checked;
+  completeHostname.disabled = !domainSubfolder.checked && !prefixDomain.checked;
+  refererModeGroup.disabled = !sendReferer.checked;
 }
 
 function normalizeFolder(value) {
@@ -233,6 +220,19 @@ function selectedConflictAction() {
 function setConflictAction(value) {
   const normalized = ["uniquify", "overwrite", "skip"].includes(value) ? value : DEFAULTS.conflictAction;
   const selected = conflictActions.find((control) => control.value === normalized);
+
+  if (selected) {
+    selected.checked = true;
+  }
+}
+
+function selectedRefererMode() {
+  return refererModes.find((control) => control.checked)?.value || DEFAULTS.refererMode;
+}
+
+function setRefererMode(value) {
+  const normalized = ["retry", "always"].includes(value) ? value : DEFAULTS.refererMode;
+  const selected = refererModes.find((control) => control.value === normalized);
 
   if (selected) {
     selected.checked = true;

@@ -12,16 +12,6 @@
       </header>
 
       <form id="options-form">
-        <section id="update-notice" class="update-notice" aria-labelledby="update-notice-title" hidden>
-          <div>
-            <h2 id="update-notice-title">Page referrer sending behavior changed</h2>
-            <p>
-              A page referrer tells an image server which website a download came from. This can improve compatibility, but it also reveals the source website, so referrers are now disabled by default. If a website rejects a download, enable the checkbox <a href="#send-referer">Send page referrer for download compatibility</a> below.
-            </p>
-          </div>
-          <button id="dismiss-update-notice" type="button">Got it</button>
-        </section>
-
         <label class="field" title="Choose a relative subfolder inside your browser´s downloads folder, or leave empty to save directly in the downloads folder. Folder names starting with a dot are allowed. Backslashes are converted to forward slashes because Firefox expects relative download paths. Absolute paths outside the downloads folder are not supported for security reasons.">
           <span>Target folder</span>
           <input id="target-folder" name="targetFolder" type="text" autocomplete="off" placeholder="Saved Images" title="Choose a relative subfolder inside your browser´s downloads folder, or leave empty to save directly in the downloads folder. Folder names starting with a dot are allowed. Backslashes are converted to forward slashes because Firefox expects relative download paths. Absolute paths outside the downloads folder are not supported for security reasons.">
@@ -32,8 +22,8 @@
             <input id="domain-subfolder" name="domainSubfolder" type="checkbox" title="Create an extra subfolder named after the image website´s domain name, so downloads from different sites are grouped separately.">
             <span>Save in a website domain subfolder</span>
           </label>
-          <label class="checkbox sub-checkbox" title="Use the full host name for the website subfolder, such as images.example.com, instead of shortening it to the registered domain, such as example.com.">
-            <input id="complete-hostname" name="completeHostname" type="checkbox" disabled title="Use the full host name for the website subfolder, such as images.example.com, instead of shortening it to the registered domain, such as example.com.">
+          <label class="checkbox sub-checkbox" title="Use the full host name for website folders and filename prefixes, such as images.example.com, instead of shortening it to the registered domain, such as example.com.">
+            <input id="complete-hostname" name="completeHostname" type="checkbox" disabled title="Use the full host name for website folders and filename prefixes, such as images.example.com, instead of shortening it to the registered domain, such as example.com.">
             <span>Use full hostname</span>
           </label>
         </div>
@@ -50,6 +40,22 @@
           </label>
         </fieldset>
 
+        <fieldset class="field checkbox-group conflict-group">
+          <legend>When file with same name already exists:</legend>
+          <label class="checkbox" title="If a file with the same name already exists, let the browser create a new numbered filename instead of replacing the existing file.">
+            <input name="conflictAction" type="radio" value="uniquify" title="If a file with the same name already exists, let the browser create a new numbered filename instead of replacing the existing file.">
+            <span>Create unique filename</span>
+          </label>
+          <label class="checkbox" title="If a file with the same name already exists, replace it with the newly saved image. Use this only when you want repeat saves to update the same file.">
+            <input name="conflictAction" type="radio" value="overwrite" title="If a file with the same name already exists, replace it with the newly saved image. Use this only when you want repeat saves to update the same file.">
+            <span>Overwrite file without warning</span>
+          </label>
+          <label class="checkbox" title="If a matching completed download already exists, do not start a new download for that filename.">
+            <input name="conflictAction" type="radio" value="skip" title="If a matching completed download already exists, do not start a new download for that filename.">
+            <span>Skip file without warning</span>
+          </label>
+        </fieldset>
+
         <fieldset class="field checkbox-group">
           <legend>Misc. options</legend>
           <label class="field" title="Set the single keyboard access key shown in your browser´s image context menu entry. Use one letter or number, or leave it empty to disable the access key.">
@@ -57,30 +63,25 @@
             <input id="menu-access-key" name="menuAccessKey" type="text" maxlength="1" autocomplete="off" inputmode="text" placeholder="i" title="Set the single keyboard access key shown in your browser´s image context menu entry. Use one letter or number, or leave it empty to disable the access key.">
           </label>
 
-          <fieldset class="field checkbox-group conflict-group">
-            <legend>When file with same name already exists:</legend>
-            <label class="checkbox" title="If a file with the same name already exists, let the browser create a new numbered filename instead of replacing the existing file.">
-              <input name="conflictAction" type="radio" value="uniquify" title="If a file with the same name already exists, let the browser create a new numbered filename instead of replacing the existing file.">
-              <span>Create unique filename</span>
+          <label class="checkbox" title="Use a reduced page referrer with HTTP and HTTPS downloads for compatibility with image servers that require it. Disabled by default because it reveals the source website and can override a stricter website referrer policy. Credentials, query parameters, and fragments are never included.">
+            <input id="send-referer" name="sendReferer" type="checkbox" title="Use a reduced page referrer with HTTP and HTTPS downloads for compatibility with image servers that require it. Disabled by default because it reveals the source website and can override a stricter website referrer policy. Credentials, query parameters, and fragments are never included.">
+            <span>Send page referrer for download compatibility</span>
+          </label>
+          <fieldset id="referer-mode-group" class="referer-mode-group" disabled>
+<!--            <legend>When enabled:</legend>-->
+            <label class="checkbox" title="Start without a referrer and retry once with a reduced referrer only when the image server rejects the first request.">
+              <input name="refererMode" type="radio" value="retry" title="Start without a referrer and retry once with a reduced referrer only when the image server rejects the first request.">
+              <span>Try without sending referrer first</span>
             </label>
-            <label class="checkbox" title="If a file with the same name already exists, replace it with the newly saved image. Use this only when you want repeat saves to update the same file.">
-              <input name="conflictAction" type="radio" value="overwrite" title="If a file with the same name already exists, replace it with the newly saved image. Use this only when you want repeat saves to update the same file.">
-              <span>Overwrite file without warning</span>
-            </label>
-            <label class="checkbox" title="If a matching completed download already exists, do not start a new download for that filename.">
-              <input name="conflictAction" type="radio" value="skip" title="If a matching completed download already exists, do not start a new download for that filename.">
-              <span>Skip file without warning</span>
+            <label class="checkbox" title="Send the reduced referrer immediately with every supported image download.">
+              <input name="refererMode" type="radio" value="always" title="Send the reduced referrer immediately with every supported image download.">
+              <span>Always send referrer</span>
             </label>
           </fieldset>
 
-          <label class="checkbox" title="Send a reduced page referrer with HTTP and HTTPS downloads for compatibility with image servers that require it. Disabled by default because it reveals the source website and can override a stricter website referrer policy. Credentials, query parameters, and fragments are never included.">
-            <input id="send-referer" name="sendReferer" type="checkbox" title="Send a reduced page referrer with HTTP and HTTPS downloads for compatibility with image servers that require it. Disabled by default because it reveals the source website and can override a stricter website referrer policy. Credentials, query parameters, and fragments are never included.">
-            <span>Send page referrer for download compatibility</span>
-          </label>
-
-          <label class="checkbox" title="After the image download starts successfully, close the browser tab where the image was saved from.">
-            <input id="close-tab" name="closeTab" type="checkbox" title="After the image download starts successfully, close the browser tab where the image was saved from.">
-            <span>Close browser tab after saving</span>
+          <label class="checkbox" title="After the image download completes successfully, close the browser tab where the image was saved from.">
+            <input id="close-tab" name="closeTab" type="checkbox" title="After the image download completes successfully, close the browser tab where the image was saved from.">
+            <span>Close browser tab after download completes</span>
           </label>
         </fieldset>
 
@@ -88,17 +89,22 @@
       </form>
 
       <footer class="page-footer">
-        <a href="https://codeberg.org/wollomatic/one-click-image-save" target="_blank" rel="noopener noreferrer" title="Link to the source code on Codeberg.">
-          Repository
-        </a>
-        |
-        <a href="https://codeberg.org/wollomatic/one-click-image-save/src/branch/main/LICENSE" target="_blank" rel="noopener noreferrer" title="One Click Image Save is licensed under the MIT license.">
-          MIT License
-        </a>
-        |
-        <span id="extension-version" title="One Click Image Save by wollomatic">version</span>
-        |
-        <a id="manage-settings" href="#" title="Show all saved data with the option to delete the persisted settings.">view and delete saved settings</a>
+        <div class="footer-link-row">
+          <a href="https://codeberg.org/wollomatic/one-click-image-save" target="_blank" rel="noopener noreferrer" title="Link to the source code on Codeberg.">
+            Source Code
+          </a>
+          <span aria-hidden="true">|</span>
+          <a href="https://codeberg.org/wollomatic/one-click-image-save/src/branch/main/LICENSE" target="_blank" rel="noopener noreferrer" title="One Click Image Save is licensed under the MIT license.">
+            MIT License
+          </a>
+          <span aria-hidden="true">|</span>
+          <a href="https://addons.mozilla.org/de/firefox/addon/one-click-image-save/" target="_blank" rel="noopener noreferrer" title="Open One Click Image Save in the Firefox Add-ons Store.">Firefox Add-ons Store</a>
+        </div>
+        <div class="footer-link-row">
+          <a id="manage-settings" href="#" title="Show and delete settings stored locally in this browser.">view and delete locally stored settings</a>
+          <span aria-hidden="true">|</span>
+          <span id="extension-version" title="One Click Image Save by wollomatic">version</span>
+        </div>
       </footer>
     </main>
 

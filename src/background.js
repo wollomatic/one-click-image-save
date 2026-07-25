@@ -1,20 +1,36 @@
 const DEFAULTS = {
   targetFolder: "Saved Images",
   domainSubfolder: false,
-  completeHostname: false,
+  completeHostname: true,
   prefixDomain: false,
   prefixTimestamp: false,
   conflictAction: "uniquify",
   sendReferer: false,
+  refererMode: "retry",
   closeTab: false,
   menuAccessKey: "i"
 };
 
 const MENU_ID_SAVE = "one-click-image-save";
 const LEGACY_MENU_IDS = ["one-click-image-save-and-close"];
-const UPDATE_NOTICE_KEY = "pendingUpdateNotice";
 const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite", "skip"]);
-const IMAGE_EXTENSIONS = new Set(["avif", "bmp", "gif", "jpg", "jpeg", "png", "svg", "webp", "tif", "tiff"]);
+const IMAGE_EXTENSIONS = new Set([
+  "avif",
+  "bmp",
+  "gif",
+  "heic",
+  "heif",
+  "ico",
+  "jfif",
+  "jpg",
+  "jpeg",
+  "jxl",
+  "png",
+  "svg",
+  "webp",
+  "tif",
+  "tiff"
+]);
 let menuSetup = Promise.resolve();
 
 browser.runtime.onInstalled.addListener((details) => {
@@ -62,19 +78,38 @@ async function initialize() {
 }
 
 async function handleInstalled(details) {
+  await migrateToVersion110(details);
   await initialize();
+}
 
-  // Version 1.0.0 changed the default; later updates must not reopen the options page.
+async function migrateToVersion110(details) {
   if (
     details.reason !== "update" ||
     details.temporary === true ||
-    browser.runtime.getManifest().version !== "1.0.0"
+    details.previousVersion === "1.1.0" ||
+    browser.runtime.getManifest().version !== "1.1.0"
   ) {
     return;
   }
 
-  await browser.storage.local.set({ [UPDATE_NOTICE_KEY]: true });
-  await browser.runtime.openOptionsPage();
+  const saved = await browser.storage.local.get([
+    "sendReferer",
+    "refererMode",
+    "completeHostname"
+  ]);
+  const migrated = {};
+
+  if (saved.sendReferer === true && saved.refererMode === undefined) {
+    migrated.refererMode = "always";
+  }
+
+  if (saved.completeHostname === undefined) {
+    migrated.completeHostname = false;
+  }
+
+  if (Object.keys(migrated).length > 0) {
+    await browser.storage.local.set(migrated);
+  }
 }
 
 function createContextMenu() {
@@ -102,26 +137,58 @@ async function saveImage(info, tab, options) {
     throw new Error("Unsupported image URL scheme.");
   }
 
-  const filename = buildDownloadFilename(srcUrl, options);
+  const filename = DownloadUtils.shouldUseBrowserFilename(srcUrl, options)
+    ? undefined
+    : buildDownloadFilename(srcUrl, info, options);
 
   if (options.conflictAction === "skip" && await downloadExists(filename)) {
     return false;
   }
 
-  await browser.downloads.download(buildDownloadOptions(srcUrl, filename, info, tab, options));
+  const downloadSource = await DownloadUtils.prepareDownloadUrl(srcUrl);
+  let result;
+
+  try {
+    const primaryOptions = buildDownloadOptions(
+      downloadSource.url,
+      filename,
+      info,
+      tab,
+      options,
+      options.sendReferer && options.refererMode === "always"
+    );
+    const fallbackCandidate = options.sendReferer && options.refererMode === "retry"
+      ? buildDownloadOptions(downloadSource.url, filename, info, tab, options, true)
+      : null;
+    const fallbackOptions = fallbackCandidate?.headers ? fallbackCandidate : null;
+    result = await DownloadUtils.downloadWithRefererFallback(
+      browser.downloads,
+      primaryOptions,
+      fallbackOptions
+    );
+  } finally {
+    downloadSource.revoke();
+  }
+
+  if (!result.success) {
+    throw new Error("Download failed.");
+  }
 
   return true;
 }
 
-function buildDownloadOptions(srcUrl, filename, info, tab, options) {
+function buildDownloadOptions(srcUrl, filename, info, tab, options, sendReferer) {
   const downloadOptions = {
     url: srcUrl,
-    filename,
     saveAs: false,
     conflictAction: downloadConflictAction(options.conflictAction)
   };
 
-  const headers = PrivacyUtils.buildRefererHeaders(srcUrl, info, options.sendReferer);
+  if (filename) {
+    downloadOptions.filename = filename;
+  }
+
+  const headers = PrivacyUtils.buildRefererHeaders(srcUrl, info, sendReferer);
 
   if (headers) {
     downloadOptions.headers = headers;
@@ -199,6 +266,7 @@ async function getOptions() {
 
   normalized.menuAccessKey = normalizeAccessKey(normalized.menuAccessKey);
   normalized.sendReferer = normalized.sendReferer === true;
+  normalized.refererMode = DownloadUtils.normalizeRefererMode(normalized.refererMode);
 
   return normalized;
 }
@@ -230,19 +298,20 @@ function normalizeAccessKey(value) {
   return "";
 }
 
-function buildDownloadFilename(srcUrl, options) {
+function buildDownloadFilename(srcUrl, info, options) {
   const folder = PathUtils.sanitizeFolderPath(options.targetFolder);
   const folderParts = [folder];
   const originalName = getOriginalFilename(srcUrl);
   const safeOriginalName = sanitizeFilename(originalName);
   const prefixes = [];
+  const domainUrl = info.pageUrl || info.frameUrl || srcUrl;
 
   if (options.domainSubfolder) {
-    folderParts.push(domainSubfolderName(srcUrl, options));
+    folderParts.push(domainSubfolderName(domainUrl, options));
   }
 
   if (options.prefixDomain) {
-    prefixes.push(domainName(srcUrl));
+    prefixes.push(domainName(domainUrl, options));
   }
 
   if (options.prefixTimestamp) {
@@ -265,13 +334,17 @@ function getOriginalFilename(srcUrl) {
 
     const lastSegment = decodePathSegment(url.pathname.split("/").filter(Boolean).pop() || "");
     const candidate = lastSegment || "image";
+    const formatExtension = extensionFromMimeLikeUrl(url);
+
+    if (formatExtension) {
+      return replaceFilenameExtension(candidate, formatExtension);
+    }
 
     if (hasUsefulExtension(candidate)) {
       return candidate;
     }
 
-    const guessed = extensionFromMimeLikeUrl(url) || "jpg";
-    return `${candidate}.${guessed}`;
+    return `${candidate}.jpg`;
   } catch {
     return `image-${timestamp()}.jpg`;
   }
@@ -286,7 +359,12 @@ function decodePathSegment(segment) {
 }
 
 function hasUsefulExtension(filename) {
-  return /\.(avif|bmp|gif|jpe?g|png|svg|webp|tiff?)$/i.test(filename);
+  return /\.(avif|bmp|gif|heic|heif|ico|jfif|jpe?g|jxl|png|svg|webp|tiff?)$/i.test(filename);
+}
+
+function replaceFilenameExtension(filename, extension) {
+  const basename = filename.replace(/\.[a-z0-9]{1,8}$/i, "") || "image";
+  return `${basename}.${extension}`;
 }
 
 function extensionFromMimeLikeUrl(url) {
@@ -302,17 +380,24 @@ function extensionFromMimeLikeUrl(url) {
 
 function extensionFromDataImageUrl(srcUrl) {
   const match = String(srcUrl).match(/^data:image\/([a-z0-9.+-]+)[;,]/i);
-  const subtype = match?.[1]?.replace(/\+xml$/i, "");
+  const subtype = match?.[1];
 
   return normalizeImageExtension(subtype);
 }
 
 function normalizeImageExtension(extension) {
-  if (!extension || !/^[a-z0-9]{2,5}$/i.test(extension)) {
+  const aliases = new Map([
+    ["jpeg", "jpg"],
+    ["svg+xml", "svg"],
+    ["x-icon", "ico"],
+    ["vnd.microsoft.icon", "ico"]
+  ]);
+  const candidate = String(extension || "").toLowerCase();
+  const normalized = aliases.get(candidate) || candidate;
+
+  if (!/^[a-z0-9]{2,5}$/i.test(normalized)) {
     return null;
   }
-
-  const normalized = extension.toLowerCase();
 
   if (!IMAGE_EXTENSIONS.has(normalized)) {
     return null;
@@ -344,7 +429,7 @@ function truncateFilename(filename, maxLength) {
     return filename;
   }
 
-  const extension = filename.match(/\.(avif|bmp|gif|jpe?g|png|svg|webp|tiff?)$/i)?.[0] || "";
+  const extension = filename.match(/\.(avif|bmp|gif|heic|heif|ico|jfif|jpe?g|jxl|png|svg|webp|tiff?)$/i)?.[0] || "";
 
   if (!extension || extension.length >= maxLength) {
     return cleanPathComponent(filename.slice(0, maxLength)) || "image";
@@ -355,8 +440,9 @@ function truncateFilename(filename, maxLength) {
   return `${basename}${extension}`;
 }
 
-function domainName(srcUrl) {
-  return sanitizeDomainPrefix(websiteDomain(srcUrl));
+function domainName(srcUrl, options) {
+  const domain = options.completeHostname ? completeHostname(srcUrl) : websiteDomain(srcUrl);
+  return sanitizeDomainPrefix(domain);
 }
 
 function domainSubfolderName(srcUrl, options) {
