@@ -10,9 +10,9 @@ https://github.com/wollomatic/one-click-image-save
 
 One Click Image Save supports desktop Firefox 140 and newer.
 
-![Save image context menu](screenshots/screenshot-menu.png)
+![Save image context menu](media/screenshot-menu.png)
 
-![Extension options page](screenshots/screenshot-options.png)
+![Extension options page](media/screenshot-options.png)
 
 ## Features
 
