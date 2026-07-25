@@ -28,8 +28,8 @@ test("sanitizeFolderPath keeps absolute-looking paths relative", () => {
   assert.equal(sanitizeFolderPath("C:/Users/Name/Pictures"), "C_/Users/Name/Pictures");
 });
 
-test("sanitizeFolderPath allows dot-prefixed and multi-dot folder names", () => {
-  assert.equal(sanitizeFolderPath(".images/.../foo..bar"), ".images/.../foo..bar");
+test("sanitizeFolderPath normalizes folder names Firefox would reject", () => {
+  assert.equal(sanitizeFolderPath(".images/.../foo..bar/cache."), "images/foo..bar/cache");
 });
 
 test("sanitizeFolderPath cleans unsafe characters and whitespace", () => {
@@ -37,9 +37,11 @@ test("sanitizeFolderPath cleans unsafe characters and whitespace", () => {
   assert.equal(sanitizeFolderPath("control\u202echar"), "controlchar");
 });
 
-test("sanitizeFolderPathComponent only removes exact current and parent directory names", () => {
+test("sanitizeFolderPathComponent removes leading and trailing dots", () => {
   assert.equal(sanitizeFolderPathComponent("."), "");
   assert.equal(sanitizeFolderPathComponent(".."), "");
-  assert.equal(sanitizeFolderPathComponent("..."), "...");
-  assert.equal(sanitizeFolderPathComponent(".hidden"), ".hidden");
+  assert.equal(sanitizeFolderPathComponent("..."), "");
+  assert.equal(sanitizeFolderPathComponent(".hidden"), "hidden");
+  assert.equal(sanitizeFolderPathComponent("visible."), "visible");
+  assert.equal(sanitizeFolderPathComponent("foo..bar"), "foo..bar");
 });

@@ -181,7 +181,7 @@ function setVersionInfo() {
 async function loadOptions() {
   const options = await browser.storage.local.get(DEFAULTS);
 
-  targetFolder.value = options.targetFolder;
+  targetFolder.value = normalizeFolder(options.targetFolder);
   domainSubfolder.checked = options.domainSubfolder;
   completeHostname.checked = options.completeHostname;
   prefixDomain.checked = options.prefixDomain;

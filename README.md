@@ -36,7 +36,7 @@ One Click Image Save supports desktop Firefox 140 and newer.
 2. Select **Save image** (either per mouse or keyboard shortcut).
 3. The image is saved to the configured location inside your Firefox downloads directory.
 
-Open the extension options page from the toolbar button or Firefox's add-ons manager to change the target folder, filename behaviour, conflict handling, and saved settings. Leave the target folder empty to save directly to Firefox's downloads directory; folder names such as `.images` are supported for hidden directories on Linux. Backslashes are converted to forward slashes because Firefox expects download paths as relative paths such as `Saved Images/example.jpg`.
+Open the extension options page from the toolbar button or Firefox's add-ons manager to change the target folder, filename behaviour, conflict handling, and saved settings. Leave the target folder empty to save directly to Firefox's downloads directory. Backslashes are converted to forward slashes because Firefox expects download paths as relative paths such as `Saved Images/example.jpg`. Firefox does not allow a folder component to start or end with a dot, so these dots are removed automatically.
 
 ## Limitations
 
@@ -57,6 +57,7 @@ Firefox for Android is not supported.
 * Recognise additional image filename and MIME formats.
 * Added selectable referrer compatibility modes: try without a referrer first, or always send it.
 * Wait for downloads to complete before closing the source tab.
+* Normalise folder names that Firefox rejects: leading and trailing dots are removed from every folder component.
 
 #### 1.0.0
 
@@ -65,7 +66,7 @@ Firefox for Android is not supported.
 * Make referrer transmission opt-in.
 * Explain the new privacy-first referrer default to existing users once after updating.
 * Added support for saving directly to Firefox's downloads directory by leaving the target folder empty.
-* Allowed dot-prefixed target folders such as `.images` for hidden directories on Linux.
+* Allowed dot-prefixed target folders such as `.images` for hidden directories on Linux (removed in v1.1.0).
 * Clarified that backslashes in target folders are converted to forward slashes for Firefox download paths.
 * Added unit tests for target-folder path normalisation and sanitation.
 

@@ -16,9 +16,11 @@
       .replace(PATH_UNSAFE_CHARS, "_")
       .replace(PATH_CONTROL_CHARS, "")
       .replace(/\s+/g, " ")
-      .trim();
+      .trim()
+      // Firefox rejects download-path components that begin or end with a dot.
+      .replace(/^\.+|\.+$/g, "");
 
-    return clean === "." || clean === ".." ? "" : clean;
+    return clean;
   }
 
   const pathUtils = {
