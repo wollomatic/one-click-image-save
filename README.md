@@ -6,7 +6,7 @@ Get it from Firefox Add-ons:
 https://addons.mozilla.org/firefox/addon/one-click-image-save/
 
 Source code:
-https://codeberg.org/wollomatic/one-click-image-save
+https://github.com/wollomatic/one-click-image-save
 
 One Click Image Save supports desktop Firefox 140 and newer.
 
@@ -58,6 +58,7 @@ Firefox for Android is not supported.
 * Added selectable referrer compatibility modes: try without a referrer first, or always send it.
 * Wait for downloads to complete before closing the source tab.
 * Normalise folder names that Firefox rejects: leading and trailing dots are removed from every folder component.
+* Transfer repository to GitHub because of Codeberg's changed Terms of Use.
 
 #### 1.0.0
 
