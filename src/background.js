@@ -1,7 +1,7 @@
 const DEFAULTS = {
   targetFolder: "Saved Images",
   domainSubfolder: false,
-  completeHostname: true,
+  completeHostname: false,
   prefixDomain: false,
   prefixTimestamp: false,
   conflictAction: "uniquify",
