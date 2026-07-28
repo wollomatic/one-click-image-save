@@ -133,7 +133,7 @@ form {
   position: relative;
   display: grid;
   gap: var(--group-gap);
-  padding: 26px;
+  padding: 26px 26px 58px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -362,16 +362,36 @@ input:focus-visible {
 }
 
 #status {
-  min-height: 1.4em;
+  position: absolute;
+  right: 26px;
+  bottom: 18px;
+  left: 26px;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  min-height: 20px;
   margin: 0;
-  color: var(--accent-warm);
-  font-size: 0.92rem;
-  font-weight: 720;
-  text-shadow: 0 0 14px rgba(255, 230, 109, 0.42);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    visibility 160ms ease;
+}
+
+#status::before {
+  flex: 0 0 auto;
+  color: rgba(50, 246, 255, 0.72);
+  font-size: 1rem;
+  line-height: 1;
+  content: "\2713";
 }
 
 #status:empty {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(4px);
 }
 
 .page-footer,
@@ -538,7 +558,13 @@ button:disabled {
     --group-gap: 20px;
     --nested-option-offset: 18px;
     gap: var(--group-gap);
-    padding: 20px;
+    padding: 20px 20px 52px;
+  }
+
+  #status {
+    right: 20px;
+    bottom: 18px;
+    left: 20px;
   }
 
   .checkbox-stack {
