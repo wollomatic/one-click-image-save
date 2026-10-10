@@ -14,6 +14,8 @@ const DEFAULTS = {
 const MENU_ID_SAVE = "one-click-image-save";
 const LEGACY_MENU_IDS = ["one-click-image-save-and-close"];
 const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite", "skip"]);
+const IMAGE_SIZE_SUFFIX = /(\.(avif|bmp|gif|heic|heif|ico|jfif|jpe?g|jxl|png|svg|webp|tiff?)):[a-z0-9_-]+$/i;
+const UTF8_ENCODER = new TextEncoder();
 const IMAGE_EXTENSIONS = new Set([
   "avif",
   "bmp",
@@ -137,7 +139,7 @@ async function saveImage(info, tab, options) {
     throw new Error("Unsupported image URL scheme.");
   }
 
-  const filename = DownloadUtils.shouldUseBrowserFilename(srcUrl, options)
+  const filename = DownloadUtils.shouldUseBrowserFilename(srcUrl, options) && !hasImageSizeSuffix(srcUrl)
     ? undefined
     : buildDownloadFilename(srcUrl, info, options);
 
@@ -318,7 +320,7 @@ function buildDownloadFilename(srcUrl, info, options) {
     prefixes.push(timestamp());
   }
 
-  const finalName = [...prefixes, safeOriginalName].join("-");
+  const finalName = sanitizeFilename([...prefixes, safeOriginalName].join("-"));
 
   return [...folderParts, finalName].filter(Boolean).join("/");
 }
@@ -326,13 +328,12 @@ function buildDownloadFilename(srcUrl, info, options) {
 function getOriginalFilename(srcUrl) {
   try {
     const url = new URL(srcUrl);
-    const dataImageExtension = extensionFromDataImageUrl(srcUrl);
-
-    if (dataImageExtension) {
-      return `image-${timestamp()}.${dataImageExtension}`;
+    if (url.protocol === "data:" && /^data:image\//i.test(srcUrl)) {
+      const dataImageExtension = extensionFromDataImageUrl(srcUrl);
+      return `image-${timestamp()}${dataImageExtension ? `.${dataImageExtension}` : ""}`;
     }
 
-    const lastSegment = decodePathSegment(url.pathname.split("/").filter(Boolean).pop() || "");
+    const lastSegment = imagePathFilename(url).replace(IMAGE_SIZE_SUFFIX, "$1");
     const candidate = lastSegment || "image";
     const formatExtension = extensionFromMimeLikeUrl(url);
 
@@ -348,6 +349,14 @@ function getOriginalFilename(srcUrl) {
   } catch {
     return `image-${timestamp()}.jpg`;
   }
+}
+
+function imagePathFilename(url) {
+  return decodePathSegment(url.pathname.split("/").filter(Boolean).pop() || "");
+}
+
+function hasImageSizeSuffix(srcUrl) {
+  return IMAGE_SIZE_SUFFIX.test(imagePathFilename(new URL(srcUrl)));
 }
 
 function decodePathSegment(segment) {
@@ -388,6 +397,7 @@ function extensionFromDataImageUrl(srcUrl) {
 function normalizeImageExtension(extension) {
   const aliases = new Map([
     ["jpeg", "jpg"],
+    ["x-png", "png"],
     ["svg+xml", "svg"],
     ["x-icon", "ico"],
     ["vnd.microsoft.icon", "ico"]
@@ -424,20 +434,37 @@ function cleanPathComponent(value) {
     .replace(/^[.\s]+|[.\s]+$/g, "");
 }
 
-function truncateFilename(filename, maxLength) {
-  if (filename.length <= maxLength) {
+function truncateFilename(filename, maxBytes) {
+  if (UTF8_ENCODER.encode(filename).length <= maxBytes) {
     return filename;
   }
 
   const extension = filename.match(/\.(avif|bmp|gif|heic|heif|ico|jfif|jpe?g|jxl|png|svg|webp|tiff?)$/i)?.[0] || "";
 
-  if (!extension || extension.length >= maxLength) {
-    return cleanPathComponent(filename.slice(0, maxLength)) || "image";
+  if (!extension || extension.length >= maxBytes) {
+    return cleanPathComponent(truncateUtf8(filename, maxBytes)) || "image";
   }
 
-  const basename = cleanPathComponent(filename.slice(0, maxLength - extension.length)) || "image";
+  const basename = cleanPathComponent(truncateUtf8(filename, maxBytes - extension.length)) || "image";
 
   return `${basename}${extension}`;
+}
+
+function truncateUtf8(value, maxBytes) {
+  let result = "";
+  let bytes = 0;
+
+  // Iterate over code points so truncation never splits a surrogate pair.
+  for (const character of value) {
+    const characterBytes = UTF8_ENCODER.encode(character).length;
+    if (bytes + characterBytes > maxBytes) {
+      break;
+    }
+    result += character;
+    bytes += characterBytes;
+  }
+
+  return result;
 }
 
 function domainName(srcUrl, options) {

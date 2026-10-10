@@ -51,6 +51,12 @@ Firefox for Android is not supported.
 
 ## Changelog
 
+#### 1.1.2
+
+* Recognise CDN image-size suffixes such as `.png:large` when choosing filenames, without changing download URLs.
+* Recognise `image/x-png` data images and use neutral filenames without an assumed extension for unknown image MIME types, keeping image data out of filenames.
+* Limit complete filenames, including prefixes, to 180 UTF-8 bytes while preserving image extensions and complete Unicode characters.
+
 #### 1.1.0
 
 * Improve compatibility with some websites.
