@@ -10,6 +10,6 @@
     "build": "web-ext build --source-dir . --overwrite-dest --ignore-files media media/**/* test test/**/* package.json pnpm-lock.yaml pnpm-workspace.yaml README.md"
   },
   "devDependencies": {
-    "web-ext": "^10.5.0"
+    "web-ext": "^10.7.0"
   }
 }
