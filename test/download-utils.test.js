@@ -20,6 +20,7 @@ function fakeDownloads(outcomes) {
   return {
     calls,
     erased,
+    onErased: { addListener() {}, removeListener() {} },
     onChanged: {
       addListener(listener) {
         listeners.add(listener);
@@ -184,4 +185,114 @@ test("interrupt reasons are classified without exposing error details", () => {
   assert.equal(isRetryableRefererError("SERVER_FORBIDDEN"), true);
   assert.equal(isRetryableRefererError("SERVER_UNAUTHORIZED"), true);
   assert.equal(isRetryableRefererError("SERVER_FAILED"), false);
+});
+
+function pendingDownload(item = { id: 7, state: "in_progress" }) {
+  const changed = new Set();
+  const erased = new Set();
+  const calls = [];
+  return {
+    item,
+    changed,
+    erased,
+    calls,
+    onChanged: {
+      addListener(listener) { changed.add(listener); },
+      removeListener(listener) { changed.delete(listener); }
+    },
+    onErased: {
+      addListener(listener) { erased.add(listener); },
+      removeListener(listener) { erased.delete(listener); }
+    },
+    async download(options) { calls.push(options); return 7; },
+    async search() { return this.item ? [this.item] : []; }
+  };
+}
+
+function assertListenersRemoved(downloads) {
+  assert.equal(downloads.changed.size, 0);
+  assert.equal(downloads.erased.size, 0);
+}
+
+test("missing download history entries fail without a referrer retry", async () => {
+  const downloads = pendingDownload(null);
+  const result = await downloadWithRefererFallback(downloads, { url: "https://example.com/image.png" }, {
+    url: "https://example.com/image.png",
+    headers: [{ name: "Referer", value: "https://example.com/" }]
+  });
+  assert.deepEqual(result, { success: false, id: 7, error: "UNKNOWN" });
+  assert.equal(downloads.calls.length, 1);
+  assertListenersRemoved(downloads);
+});
+
+test("erasing a pending download releases listeners and ignores a late search result", async () => {
+  const downloads = pendingDownload();
+  let resolveSearch;
+  downloads.search = () => new Promise((resolve) => { resolveSearch = resolve; });
+  const waiting = downloadWithRefererFallback(downloads, { url: "https://example.com/image.png" }, {
+    url: "https://example.com/image.png",
+    headers: [{ name: "Referer", value: "https://example.com/" }]
+  });
+  await new Promise(setImmediate);
+  const [handleErased] = downloads.erased;
+  handleErased(8);
+  assert.equal(downloads.changed.size, 1);
+  handleErased(7);
+  assert.deepEqual(await waiting, { success: false, id: 7, error: "UNKNOWN" });
+  resolveSearch([{ id: 7, state: "complete" }]);
+  await new Promise(setImmediate);
+  assert.equal(downloads.calls.length, 1);
+  assertListenersRemoved(downloads);
+});
+
+test("concurrent complete and erased events keep the first terminal result", async () => {
+  for (const erasedFirst of [false, true]) {
+    const downloads = pendingDownload();
+    const waiting = downloadWithRefererFallback(downloads, { url: "https://example.com/image.png" }, null);
+    await new Promise(setImmediate);
+    const [handleChanged] = downloads.changed;
+    const [handleErased] = downloads.erased;
+    if (erasedFirst) {
+      handleErased(7);
+      handleChanged({ id: 7, state: { current: "complete" } });
+    } else {
+      handleChanged({ id: 7, state: { current: "complete" } });
+      handleErased(7);
+    }
+    assert.deepEqual(await waiting, {
+      success: !erasedFirst, id: 7, error: erasedFirst ? "UNKNOWN" : null
+    });
+    assertListenersRemoved(downloads);
+  }
+});
+
+test("an interrupted download that disappears does not retry its stale referrer error", async () => {
+  const downloads = pendingDownload();
+  const waiting = downloadWithRefererFallback(downloads, { url: "https://example.com/image.png" }, {
+    url: "https://example.com/image.png",
+    headers: [{ name: "Referer", value: "https://example.com/" }]
+  });
+  await new Promise(setImmediate);
+  downloads.item = null;
+  const [handleChanged] = downloads.changed;
+  handleChanged({
+    id: 7, error: { current: "SERVER_FORBIDDEN" }, state: { current: "interrupted" }
+  });
+  assert.deepEqual(await waiting, { success: false, id: 7, error: "UNKNOWN" });
+  assert.equal(downloads.calls.length, 1);
+  assertListenersRemoved(downloads);
+});
+
+test("download search failures and already-complete downloads release both listeners", async () => {
+  for (const searchFails of [false, true]) {
+    const downloads = pendingDownload({ id: 7, state: "complete" });
+    if (searchFails) {
+      downloads.search = async () => { throw new Error("Search failed"); };
+    }
+    const result = await downloadWithRefererFallback(downloads, { url: "https://example.com/image.png" }, null);
+    assert.deepEqual(result, {
+      success: !searchFails, id: 7, error: searchFails ? "UNKNOWN" : null
+    });
+    assertListenersRemoved(downloads);
+  }
 });

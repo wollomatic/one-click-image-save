@@ -12,7 +12,6 @@ const DEFAULTS = {
 };
 
 const MENU_ID_SAVE = "one-click-image-save";
-const LEGACY_MENU_IDS = ["one-click-image-save-and-close"];
 const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite", "skip"]);
 const IMAGE_SIZE_SUFFIX = /(\.(avif|bmp|gif|heic|heif|ico|jfif|jpe?g|jxl|png|svg|webp|tiff?)):[a-z0-9_-]+$/i;
 const UTF8_ENCODER = new TextEncoder();
@@ -35,8 +34,8 @@ const IMAGE_EXTENSIONS = new Set([
 ]);
 let menuSetup = Promise.resolve();
 
-browser.runtime.onInstalled.addListener((details) => {
-  handleInstalled(details).catch((error) => {
+browser.runtime.onInstalled.addListener(() => {
+  initialize().catch((error) => {
     console.error("Could not finish extension update setup:", error);
   });
 });
@@ -79,48 +78,11 @@ async function initialize() {
   await createContextMenu();
 }
 
-async function handleInstalled(details) {
-  await migrateToVersion110(details);
-  await initialize();
-}
-
-async function migrateToVersion110(details) {
-  if (
-    details.reason !== "update" ||
-    details.temporary === true ||
-    details.previousVersion === "1.1.0" ||
-    browser.runtime.getManifest().version !== "1.1.0"
-  ) {
-    return;
-  }
-
-  const saved = await browser.storage.local.get([
-    "sendReferer",
-    "refererMode",
-    "completeHostname"
-  ]);
-  const migrated = {};
-
-  if (saved.sendReferer === true && saved.refererMode === undefined) {
-    migrated.refererMode = "always";
-  }
-
-  if (saved.completeHostname === undefined) {
-    migrated.completeHostname = false;
-  }
-
-  if (Object.keys(migrated).length > 0) {
-    await browser.storage.local.set(migrated);
-  }
-}
-
 function createContextMenu() {
   menuSetup = menuSetup.catch(() => undefined).then(async () => {
     const options = await getOptions();
 
-    await Promise.all([MENU_ID_SAVE, ...LEGACY_MENU_IDS].map((menuId) => (
-      browser.contextMenus.remove(menuId).catch(() => undefined)
-    )));
+    await browser.contextMenus.remove(MENU_ID_SAVE).catch(() => undefined);
 
     browser.contextMenus.create({
       id: MENU_ID_SAVE,

@@ -123,6 +123,7 @@
 
         settled = true;
         downloadsApi.onChanged.removeListener(handleChanged);
+        downloadsApi.onErased.removeListener(handleErased);
         resolve({ ...result, id });
       };
 
@@ -131,7 +132,7 @@
           const [item] = await downloadsApi.search({ id });
           finish({
             success: false,
-            error: item?.error || lastError || "UNKNOWN"
+            error: item ? item.error || lastError || "UNKNOWN" : "UNKNOWN"
           });
         } catch {
           finish({
@@ -142,7 +143,7 @@
       };
 
       const handleChanged = (delta) => {
-        if (delta.id !== id) {
+        if (delta.id !== id || settled) {
           return;
         }
 
@@ -157,12 +158,24 @@
         }
       };
 
+      const handleErased = (erasedId) => {
+        if (erasedId === id) {
+          finish({ success: false, error: "UNKNOWN" });
+        }
+      };
+
       downloadsApi.onChanged.addListener(handleChanged);
+      downloadsApi.onErased.addListener(handleErased);
 
       downloadsApi.search({ id }).then(([item]) => {
-        if (item?.state === "complete") {
+        if (settled) {
+          return;
+        }
+        if (!item) {
+          finish({ success: false, error: "UNKNOWN" });
+        } else if (item.state === "complete") {
           finish({ success: true, error: null });
-        } else if (item?.state === "interrupted") {
+        } else if (item.state === "interrupted") {
           lastError = item.error || lastError;
           finishInterrupted();
         }

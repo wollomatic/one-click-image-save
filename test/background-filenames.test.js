@@ -39,7 +39,8 @@ async function loadBackground(options = {}) {
         return downloadCalls.length;
       },
       async search({ id }) { return [{ id, state: "complete" }]; },
-      onChanged: { addListener() {}, removeListener() {} }
+      onChanged: { addListener() {}, removeListener() {} },
+      onErased: { addListener() {}, removeListener() {} }
     }
   };
   const context = vm.createContext({

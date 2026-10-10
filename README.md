@@ -56,6 +56,13 @@ Firefox for Android is not supported.
 * Recognise CDN image-size suffixes such as `.png:large` when choosing filenames, without changing download URLs.
 * Recognise `image/x-png` data images and use neutral filenames without an assumed extension for unknown image MIME types, keeping image data out of filenames.
 * Limit complete filenames, including prefixes, to 180 UTF-8 bytes while preserving image extensions and complete Unicode characters.
+* Keep rapid option changes in order and prevent pending autosaves from restoring deleted settings.
+* Stop waiting for downloads removed from the download history and release their event listeners.
+
+#### 1.1.1 (unreleased)
+
+* Prevent layout shifts when autosave status messages appear or disappear on the options page.
+* Use shortened website domains by default for filename prefixes and subfolders, matching the options page.
 
 #### 1.1.0
 

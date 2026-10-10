@@ -32,6 +32,8 @@ const settingsContent = document.querySelector("#settings-content");
 const deleteSettings = document.querySelector("#delete-settings");
 let saveTimeout;
 let clearStatusTimeout;
+let settingsWrites = Promise.resolve();
+let resettingSettings = false;
 
 setVersionInfo();
 loadOptions();
@@ -88,31 +90,57 @@ function getOptions() {
 
 function scheduleSave() {
   clearTimeout(saveTimeout);
+  if (resettingSettings) {
+    return;
+  }
   saveTimeout = setTimeout(saveOptions, 350);
 }
 
 async function saveOptions() {
   clearTimeout(saveTimeout);
+  if (resettingSettings) {
+    return;
+  }
 
   try {
     await saveChangedOptions(getOptions());
-    showStatus("Options autosaved.");
+    if (!resettingSettings) {
+      showStatus("Options autosaved.");
+    }
   } catch (error) {
     console.error("Could not save options:", error);
-    showStatus("Could not autosave options.");
+    if (!resettingSettings) {
+      showStatus("Could not autosave options.");
+    }
   }
 }
 
-async function saveChangedOptions(options) {
+function enqueueSettingsWrite(write) {
+  settingsWrites = settingsWrites.catch(() => undefined).then(write);
+  return settingsWrites;
+}
+
+function saveChangedOptions(options) {
+  if (resettingSettings) {
+    return Promise.resolve();
+  }
+
   const changedOptions = Object.fromEntries(
     Object.entries(options).filter(([key, value]) => value !== DEFAULTS[key])
   );
+  const defaultKeys = Object.entries(options)
+    .filter(([key, value]) => value === DEFAULTS[key])
+    .map(([key]) => key);
 
-  await browser.storage.local.remove(Object.keys(DEFAULTS));
+  return enqueueSettingsWrite(async () => {
+    if (Object.keys(changedOptions).length > 0) {
+      await browser.storage.local.set(changedOptions);
+    }
 
-  if (Object.keys(changedOptions).length > 0) {
-    await browser.storage.local.set(changedOptions);
-  }
+    if (defaultKeys.length > 0) {
+      await browser.storage.local.remove(defaultKeys);
+    }
+  });
 }
 
 async function openSettingsDialog(event) {
@@ -149,20 +177,23 @@ async function refreshStoredSettings() {
 }
 
 async function deleteSavedSettings() {
-  if (!confirm("Remove all saved One Click Image Save settings from this browser?")) {
+  if (resettingSettings || !confirm("Remove all saved One Click Image Save settings from this browser?")) {
     return;
   }
 
   clearTimeout(saveTimeout);
+  resettingSettings = true;
 
   try {
-    await browser.storage.local.clear();
+    await enqueueSettingsWrite(() => browser.storage.local.clear());
     await loadOptions();
     await refreshStoredSettings();
     showStatus("Saved settings removed.");
   } catch (error) {
     console.error("Could not remove saved settings:", error);
     showStatus("Could not remove saved settings.");
+  } finally {
+    resettingSettings = false;
   }
 }
 
