@@ -22,7 +22,6 @@ function New-FixtureImage {
     $cyan = [System.Drawing.Pen]::new([System.Drawing.ColorTranslator]::FromHtml('#32f6ff'), 3)
     $grid = [System.Drawing.Pen]::new([System.Drawing.Color]::FromArgb(65, 50, 246, 255), 1)
     $textBrush = [System.Drawing.SolidBrush]::new([System.Drawing.ColorTranslator]::FromHtml('#d7e9ff'))
-    $accentBrush = [System.Drawing.SolidBrush]::new([System.Drawing.ColorTranslator]::FromHtml('#32f6ff'))
     $font = [System.Drawing.Font]::new('Consolas', 16, [System.Drawing.FontStyle]::Regular, [System.Drawing.GraphicsUnit]::Pixel)
     try {
         $graphics.FillRectangle($sky, 0, 0, 960, 480)
@@ -55,11 +54,10 @@ function New-FixtureImage {
         $graphics.DrawLines($cyan, $frontPoints[0..4])
         foreach ($y in @(438,458)) { $graphics.DrawLine($grid, 0, $y, 960, $y) }
         foreach ($x in @(0,120,360,600,840,960)) { $graphics.DrawLine($grid, 480, 426, $x, 480) }
-        $graphics.DrawString('ONE CLICK / IMAGE SIGNAL', $font, $accentBrush, 38, 32)
         $graphics.DrawString($Label, $font, $textBrush, 38, 433)
         $bitmap.Save((Join-Path $PSScriptRoot $Filename), $Format)
     } finally {
-        foreach ($resource in @($font,$accentBrush,$textBrush,$grid,$cyan,$edge,$front,$back,$stripe,$stars,$pink,$sky,$graphics,$bitmap)) { $resource.Dispose() }
+        foreach ($resource in @($font,$textBrush,$grid,$cyan,$edge,$front,$back,$stripe,$stars,$pink,$sky,$graphics,$bitmap)) { $resource.Dispose() }
     }
 }
 

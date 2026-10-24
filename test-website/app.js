@@ -11,8 +11,7 @@ const svgArtwork = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="
   <path d="m0 355 166-184 188 203 153-123 171 133 130-111 152 90v117H0" fill="#0b1428" stroke="#637291" stroke-width="2"/>
   <path d="m0 408 262-140 210 158 192-104 296 104v54H0" fill="#101c31" stroke="#32f6ff" stroke-width="3"/>
   <path d="M0 438h960M0 458h960m-480-32-120 54m120-54 120 54m-120-54-360 54m360-54 360 54" stroke="#32f6ff" stroke-opacity=".28"/>
-  <text x="38" y="52" fill="#32f6ff" font-family="monospace" font-size="17" letter-spacing="3">ONE CLICK / IMAGE SIGNAL</text>
-  <text x="38" y="453" fill="#d7e9ff" font-family="monospace" font-size="16" letter-spacing="2">SVG · VECTOR SOURCE</text>
+  <text x="38" y="453" fill="#d7e9ff" font-family="monospace" font-size="16" letter-spacing="2">SVG / VECTOR SOURCE</text>
 </svg>`;
 
 function drawCanvas(canvas, label) {
