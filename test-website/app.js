@@ -189,30 +189,30 @@ const cases = [
     sample: '<img src="assets/Gr%C3%BC%C3%9Fe%20%E6%9D%B1%E4%BA%AC.png" width="960" height="480" alt="PNG with a filename containing German and Japanese characters">'
   },
   {
-    id: "blob", category: "boundaries", title: "Blob URL", tag: "blob: / UNSUPPORTED", limited: true,
+    id: "blob", category: "boundaries", title: "Blob URL", tag: "blob: / UNSUPPORTED", limited: true, support: "UNSUPPORTED",
     description: "<img> with a page-owned SVG blob URL.",
     expected: "No download. The add-on’s menu entry is hidden for <code>blob:</code> URLs.",
     markup: 'const url = URL.createObjectURL(\n  new Blob([svg], { type: "image/svg+xml" })\n);\nimage.src = url;',
     sample: `<img src="${blobUrl}" width="960" height="480" alt="SVG displayed from a page-owned blob URL">`
   },
   {
-    id: "background", category: "boundaries", title: "CSS background", tag: "CSS / BROWSER-DEPENDENT", limited: true,
+    id: "background", category: "boundaries", title: "CSS background", tag: "CSS / UNSUPPORTED", limited: true, support: "UNSUPPORTED",
     description: "<div> with a CSS background-image.",
-    expected: "Saves <code>landscape.svg</code> if Firefox exposes its URL in an image context. Otherwise the add-on action is unavailable.",
+    expected: "No download. Firefox does not expose a CSS background as an image context to this add-on, so its menu entry is hidden.",
     markup: '<div style="background-image: url(assets/landscape.svg)"></div>',
     sample: '<div role="img" aria-label="Neon landscape set as a CSS background" style="background: url(assets/landscape.svg) center / cover no-repeat"></div>',
-    source: "assets/landscape.svg"
+    source: "CSS background URL; Firefox does not pass it as an image source to the add-on."
   },
   {
-    id: "canvas", category: "boundaries", title: "Canvas", tag: "CANVAS / BROWSER-DEPENDENT", limited: true,
+    id: "canvas", category: "boundaries", title: "Canvas", tag: "CANVAS / UNSUPPORTED", limited: true, support: "UNSUPPORTED",
     description: "Drawing on a <canvas> without an image URL.",
-    expected: "Downloads only if Firefox supplies a generated <code>data:image/</code> source. Otherwise no add-on download is available.",
+    expected: "No download. Firefox reports a canvas context without an image URL, so the add-on menu entry is hidden.",
     markup: '<canvas width="960" height="480"></canvas>\n// Scene drawn with canvas.getContext("2d").',
     sample: '<canvas id="canvas-fixture" width="960" height="480" role="img" aria-label="Neon landscape drawn directly on a canvas">Canvas scene; no image URL.</canvas>',
-    source: "Canvas pixels; no src or currentSrc. Firefox may supply a generated data URL."
+    source: "Canvas pixels; Firefox does not provide an image srcUrl to the add-on."
   },
   {
-    id: "inline-svg", category: "boundaries", title: "Inline SVG", tag: "INLINE MARKUP / NO FILE URL", limited: true,
+    id: "inline-svg", category: "boundaries", title: "Inline SVG", tag: "INLINE MARKUP / NO FILE URL", limited: true, support: "UNSUPPORTED",
     description: "<svg> markup embedded directly in the page.",
     expected: "No image URL to download. The add-on cannot export inline SVG; its image action is generally absent.",
     markup: '<svg viewBox="0 0 960 480">\n  <!-- Vector shapes are part of this document. -->\n</svg>',
@@ -220,7 +220,7 @@ const cases = [
     source: "Inline SVG markup; no image URL."
   },
   {
-    id: "broken", category: "boundaries", title: "Missing image (404)", tag: "HTTP 404", limited: true,
+    id: "broken", category: "boundaries", title: "Missing image (404)", tag: "HTTP 404", limited: true, support: "ERROR TEST",
     description: "<img> pointing to a missing file.",
     expected: "No successful download. If the add-on action is available, the request fails and a red <code>!</code> badge appears on the toolbar button. Hover for the reason. The tab stays open.",
     markup: '<img src="assets/intentionally-missing.png" alt="Intentionally missing image">',
@@ -237,10 +237,9 @@ for (const [index, test] of cases.entries()) {
   const article = document.createElement("article");
   article.className = `test-card${test.limited ? " limited-case" : ""}`;
   article.id = `case-${test.id}`;
-  article.dataset.result = "untested";
   article.setAttribute("aria-labelledby", `title-${test.id}`);
   article.innerHTML = `
-    <div class="card-top"><span class="case-number">${String(index + 1).padStart(2, "0")}</span><span class="category">${categoryNames[test.category]}</span><span class="badge${test.limited ? " limited" : ""}">${test.limited ? "LIMITED" : "SUPPORTED"}</span></div>
+    <div class="card-top"><span class="case-number">${String(index + 1).padStart(2, "0")}</span><span class="category">${categoryNames[test.category]}</span><span class="badge${test.limited ? " limited" : ""}">${test.support || "SUPPORTED"}</span></div>
     <div class="sample">${test.sample}<span class="sample-tag">${escapeHtml(test.tag)}</span></div>
     <div class="card-body">
       <h3 id="title-${test.id}">${escapeHtml(test.title)}</h3>
@@ -249,7 +248,7 @@ for (const [index, test] of cases.entries()) {
       <div class="card-actions">${test.action || ""}</div>
       <details><summary>Inspect embedding &amp; source</summary><pre><code>${escapeHtml(test.markup)}</code></pre><p class="source-label">${test.id === "frame" ? "IMAGE INSIDE FRAME" : "RESOLVED SOURCE"}</p><code class="resolved-source"></code></details>
     </div>
-    <div class="result"><label class="result-label" for="result-${test.id}">Your result</label><select id="result-${test.id}" aria-label="Manual result for ${escapeHtml(test.title)}"><option value="untested">Not tested</option><option value="passed">Passed</option><option value="failed">Failed</option></select></div>`;
+  `;
   grid.append(article);
   cards.set(test.id, article);
   const image = article.querySelector(".sample img");
@@ -258,10 +257,6 @@ for (const [index, test] of cases.entries()) {
     image.addEventListener("error", () => updateSource(test, article));
   }
   article.querySelector("details").addEventListener("toggle", () => updateSource(test, article));
-  article.querySelector("select").addEventListener("change", (event) => {
-    article.dataset.result = event.target.value;
-    updateSummary();
-  });
   updateSource(test, article);
 }
 
@@ -288,16 +283,12 @@ document.querySelector("#switch-source").addEventListener("click", (event) => {
 });
 
 let activeFilter = "all";
-const search = document.querySelector("#search");
 
 function filterCases() {
-  const query = search.value.trim().toLowerCase();
   let visible = 0;
   for (const test of cases) {
     const card = cards.get(test.id);
-    const matchesCategory = activeFilter === "all" || test.category === activeFilter;
-    const text = `${test.title} ${test.description} ${test.expected} ${test.markup} ${test.tag}`.toLowerCase();
-    card.hidden = !matchesCategory || !text.includes(query);
+    card.hidden = activeFilter !== "all" && test.category !== activeFilter;
     if (!card.hidden) visible++;
   }
   document.querySelector("#visible-count").textContent = `${visible} of ${cases.length} cases`;
@@ -309,25 +300,6 @@ document.querySelectorAll("[data-filter]").forEach((button) => button.addEventLi
   document.querySelectorAll("[data-filter]").forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
   filterCases();
 }));
-search.addEventListener("input", filterCases);
-
-function updateSummary() {
-  const allCards = [...cards.values()];
-  const passed = allCards.filter((card) => card.dataset.result === "passed").length;
-  const failed = allCards.filter((card) => card.dataset.result === "failed").length;
-  document.querySelector("#run-summary").textContent = passed + failed === 0
-    ? "No cases checked yet"
-    : `${passed + failed}/${cases.length} checked · ${passed} passed · ${failed} failed`;
-  document.querySelector("#reset-results").disabled = passed + failed === 0;
-}
-
-document.querySelector("#reset-results").addEventListener("click", () => {
-  for (const card of cards.values()) {
-    card.dataset.result = "untested";
-    card.querySelector("select").value = "untested";
-  }
-  updateSummary();
-});
 
 window.addEventListener("resize", () => {
   for (const test of cases) updateSource(test, cards.get(test.id));
@@ -337,4 +309,3 @@ window.addEventListener("pagehide", (event) => { if (!event.persisted) URL.revok
 document.querySelector("#protocol-notice").hidden = location.protocol !== "file:";
 document.querySelector("#total-count").textContent = cases.length;
 filterCases();
-updateSummary();

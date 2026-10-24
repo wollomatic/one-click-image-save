@@ -22,18 +22,7 @@
 
     <main>
       <section class="intro" aria-labelledby="page-title">
-        <div>
-          <h1 id="page-title">Image download <span>tests</span></h1>
-          <p class="lede">For Firefox 140+. Expected filenames assume the add-on’s default settings.</p>
-        </div>
-        <aside class="quick-start" aria-label="How to test">
-          <span class="panel-label">INSTRUCTIONS</span>
-          <ol>
-            <li><span>01</span><div>Use the add-on’s default settings.</div></li>
-            <li><span>02</span><div>Right-click an image and select the add-on’s <b>Save image</b> entry.</div></li>
-            <li><span>03</span><div>Compare the download with the expected result. Mark passed or failed; reloading clears results.</div></li>
-          </ol>
-        </aside>
+        <h1 id="page-title">Image download <span>tests</span></h1>
       </section>
 
       <aside class="notice" id="protocol-notice" hidden>
@@ -41,10 +30,7 @@
       </aside>
 
       <section class="bench" aria-labelledby="bench-title">
-        <div class="section-top">
-          <div><h2 id="bench-title">Test cases<span id="total-count" class="count"></span></h2></div>
-          <div class="run-summary" aria-live="polite"><span id="run-summary">No cases checked yet</span><button id="reset-results" type="button" disabled>Reset results <span aria-hidden="true">↺</span></button></div>
-        </div>
+        <h2 id="bench-title" class="bench-title">Test cases<span id="total-count" class="count"></span></h2>
         <div class="toolbar">
           <div class="filters" role="group" aria-label="Filter test cases by category">
             <button type="button" data-filter="all" aria-pressed="true">All cases</button>
@@ -54,25 +40,13 @@
             <button type="button" data-filter="filenames" aria-pressed="false">Filenames</button>
             <button type="button" data-filter="boundaries" aria-pressed="false">Boundaries</button>
           </div>
-          <label class="search"><span class="sr-only">Search test cases</span><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a test…" autocomplete="off"></label>
         </div>
-        <p class="collection-note"><span class="legend"><i></i> Expected download</span><span class="legend limited"><i></i> Browser-dependent / unsupported</span><span id="visible-count" aria-live="polite"></span></p>
+        <p class="collection-note"><span class="legend"><i></i> Expected download</span><span class="legend limited"><i></i> Unsupported / error case</span><span id="visible-count" aria-live="polite"></span></p>
         <div class="test-grid" id="test-cases"></div>
         <p class="empty-state" id="empty-state" hidden>No matching cases.</p>
         <noscript><p class="notice">JavaScript is required to display the test cases. <a href="assets/landscape.png">Open the PNG fixture</a>.</p></noscript>
       </section>
 
-      <section class="options-checks" aria-labelledby="options-title">
-        <div><h2 id="options-title">Settings</h2><p>Change one setting at a time, then save a PNG above.</p></div>
-        <dl class="checklist">
-          <div><dt>Destination &amp; filename</dt><dd>An empty target folder uses Firefox’s downloads directory. Subfolders stay inside it. Domain folders use this page’s hostname; domain prefixes replace dots with underscores. Timestamps use local time.</dd></div>
-          <div><dt>Repeat downloads</dt><dd>Save an image twice with timestamp prefixes off. “Create a unique name” keeps both; “Overwrite” replaces the file; “Skip” shows a grey “–” badge when a matching completed file still exists and remains in Firefox’s download history.</dd></div>
-          <div><dt>Automatic tab closing</dt><dd>Test in a disposable tab. It should close after a successful download completes, and stay open after failure or a skipped download.</dd></div>
-          <div><dt>Browser-selected filenames</dt><dd>Empty the target folder, disable domain subfolders and prefixes, and use “Create a unique name” or “Overwrite”. Firefox then chooses most HTTP(S) filenames.</dd></div>
-          <div><dt>Referrer compatibility</dt><dd>Local files should download in all referrer modes. Testing authentication, referrer rejection, redirects, and Content-Disposition requires a separate server.</dd></div>
-          <div><dt>Filename edge cases</dt><dd>CDN suffixes, Windows device names, and the 180-byte filename limit are covered by the repository’s automated tests. Colon-containing filenames cannot be stored on Windows.</dd></div>
-        </dl>
-      </section>
     </main>
     <footer><span>One Click Image Save</span><a href="#page-title">Back to top ↑</a></footer>
   </div>
