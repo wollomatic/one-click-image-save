@@ -25,7 +25,13 @@ async function loadBackground(options = {}) {
       onInstalled: { addListener() {} },
       onStartup: { addListener() {} }
     },
-    action: { onClicked: { addListener() {} } },
+    action: {
+      onClicked: { addListener() {} },
+      async setBadgeText() {},
+      async setBadgeBackgroundColor() {},
+      async setBadgeTextColor() {},
+      async setTitle() {}
+    },
     storage: {
       local: { async get(defaults) { return { ...defaults, ...options }; } },
       session: {

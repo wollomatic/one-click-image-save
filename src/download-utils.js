@@ -119,7 +119,7 @@
       records.delete(id);
     }
 
-    async function finish(id, success) {
+    async function finish(id, success, error = "UNKNOWN") {
       const record = records.get(id);
       if (!record) {
         return;
@@ -131,7 +131,7 @@
       if (success) {
         await onComplete(record);
       } else {
-        onError();
+        await onError(error, record);
       }
     }
 
@@ -169,18 +169,18 @@
       }
       const [item] = await downloadsApi.search({ id });
       if (!item) {
-        await finish(id, false);
+        await finish(id, false, "DOWNLOAD_REMOVED");
       } else if (item.state === "complete") {
         await finish(id, true);
       } else if (item.state === "interrupted" && !item.paused) {
         if (record.fallbackOptions && isRetryableRefererError(item.error)) {
           try {
             await launch(record.fallbackOptions, { ...record, fallbackOptions: null }, id);
-          } catch {
-            await finish(id, false);
+          } catch (error) {
+            await finish(id, false, interruptReason(error));
           }
         } else {
-          await finish(id, false);
+          await finish(id, false, item.error || "UNKNOWN");
         }
       }
     }
@@ -192,7 +192,7 @@
       }
       return reconcile(delta.id);
     }).catch(onError));
-    downloadsApi.onErased.addListener((id) => enqueue(() => finish(id, false)).catch(onError));
+    downloadsApi.onErased.addListener((id) => enqueue(() => finish(id, false, "DOWNLOAD_REMOVED")).catch(onError));
 
     const ready = enqueue(async () => {
       const saved = await sessionStorage.get(null);
@@ -209,8 +209,8 @@
 
     return {
       ready,
-      start(primaryOptions, fallbackOptions, { tabId = null, objectUrl = null } = {}) {
-        return enqueue(() => launch(primaryOptions, { tabId, objectUrl, fallbackOptions }));
+      start(primaryOptions, fallbackOptions, { tabId = null, sourceTabId = null, objectUrl = null } = {}) {
+        return enqueue(() => launch(primaryOptions, { tabId, sourceTabId, objectUrl, fallbackOptions }));
       }
     };
   }

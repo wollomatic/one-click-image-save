@@ -191,7 +191,7 @@ const cases = [
   {
     id: "blob", category: "boundaries", title: "Blob URL", tag: "blob: / UNSUPPORTED", limited: true,
     description: "<img> with a page-owned SVG blob URL.",
-    expected: "No download: the add-on rejects <code>blob:</code> URLs, even if the menu entry appears.",
+    expected: "No download. The add-on’s menu entry is hidden for <code>blob:</code> URLs.",
     markup: 'const url = URL.createObjectURL(\n  new Blob([svg], { type: "image/svg+xml" })\n);\nimage.src = url;',
     sample: `<img src="${blobUrl}" width="960" height="480" alt="SVG displayed from a page-owned blob URL">`
   },
@@ -222,7 +222,7 @@ const cases = [
   {
     id: "broken", category: "boundaries", title: "Missing image (404)", tag: "HTTP 404", limited: true,
     description: "<img> pointing to a missing file.",
-    expected: "No successful download. If the add-on action is available, the request fails. The tab stays open.",
+    expected: "No successful download. If the add-on action is available, the request fails and a red <code>!</code> badge appears on the toolbar button. Hover for the reason. The tab stays open.",
     markup: '<img src="assets/intentionally-missing.png" alt="Intentionally missing image">',
     sample: '<img class="broken-image" src="assets/intentionally-missing.png" width="960" height="480" alt="Intentionally missing image · expected HTTP 404">'
   }

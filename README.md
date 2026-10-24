@@ -42,6 +42,8 @@ Reserved Windows device names such as `AUX.png` are prefixed with an underscore.
 
 Pending download metadata is kept in Firefox's in-memory session storage so completion handling and referrer retries survive background-page suspension. This metadata is removed when a download finishes, fails, or is removed from the download history, and is cleared when the browser session ends. Paused downloads remain pending until resumed or cancelled. Saved options continue to use local storage separately.
 
+A red **!** badge on the toolbar button indicates a failed image download. Hover over the button for a short explanation. A grey **–** indicates a skipped or cancelled download, or one removed from history before completion. Feedback applies to the source tab and is cleared by the next save attempt or by clicking the toolbar button. Tooltips do not include image URLs or raw server error messages.
+
 ## Limitations
 
 Due to Firefox extension restrictions, downloads can only be saved within Firefox's configured download directory.
@@ -55,8 +57,10 @@ Firefox for Android is not supported.
 
 ## Changelog
 
-#### Unreleased
+#### 1.2.0
 
+* Hide the image context menu entry for unsupported image URL schemes.
+* Show per-tab download failure and skip feedback on the toolbar without additional permissions.
 * Restore pending download handling after background-page suspension, including tab closing and referrer retries.
 * Keep paused downloads pending and release temporary image URLs only after completion, cancellation, or history removal.
 * Sanitize Windows device names in filenames and target folders.

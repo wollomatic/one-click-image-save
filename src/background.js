@@ -12,6 +12,16 @@ const DEFAULTS = {
 };
 
 const MENU_ID_SAVE = "one-click-image-save";
+const ACTION_TITLE = "Open One Click Image Save options";
+// Match-pattern paths are case-sensitive, but image MIME types are not.
+const IMAGE_URL_PATTERNS = [
+  "http://*/*",
+  "https://*/*",
+  ...Array.from("image").reduce(
+    (prefixes, letter) => prefixes.flatMap((prefix) => [prefix + letter, prefix + letter.toUpperCase()]),
+    ["data:"]
+  ).map((prefix) => `${prefix}/*`)
+];
 const CONFLICT_ACTIONS = new Set(["uniquify", "overwrite", "skip"]);
 const IMAGE_SIZE_SUFFIX = /(\.(avif|bmp|gif|heic|heif|ico|jfif|jpe?g|jxl|png|svg|webp|tiff?)):[a-z0-9_-]+$/i;
 const UTF8_ENCODER = new TextEncoder();
@@ -33,6 +43,7 @@ const IMAGE_EXTENSIONS = new Set([
   "tiff"
 ]);
 let menuSetup = Promise.resolve();
+let feedbackUpdates = Promise.resolve();
 // Register download listeners during script evaluation so Firefox can wake this
 // event page after suspension. Only temporary download state goes into session.
 const downloadManager = DownloadUtils.createDownloadManager(
@@ -44,7 +55,14 @@ const downloadManager = DownloadUtils.createDownloadManager(
         await closeTab(tabId);
       }
     },
-    onError: () => console.error("Could not save image.")
+    onError: async (error, record) => {
+      if (record) {
+        await showDownloadError(record.sourceTabId ?? record.tabId, error);
+      } else {
+        // A bookkeeping error does not mean the download itself failed.
+        console.error("Could not update image download state.");
+      }
+    }
   }
 );
 
@@ -61,8 +79,9 @@ initialize().catch((error) => {
   console.error("Could not initialize One Click Image Save:", error);
 });
 
-browser.action.onClicked.addListener(() => {
-  browser.runtime.openOptionsPage();
+browser.action.onClicked.addListener(async (tab) => {
+  await setDownloadFeedback(tab?.id);
+  await browser.runtime.openOptionsPage();
 });
 
 browser.storage.onChanged.addListener((changes, areaName) => {
@@ -77,10 +96,14 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   try {
+    await setDownloadFeedback(tab?.id);
     const options = await getOptions();
-    await saveImage(info, tab, options);
-  } catch {
-    console.error("Could not save image.");
+    const started = await saveImage(info, tab, options);
+    if (!started) {
+      await setDownloadFeedback(tab?.id, "–", "Skipped: a matching downloaded file already exists.");
+    }
+  } catch (error) {
+    await showDownloadError(tab?.id, error);
   }
 });
 
@@ -97,7 +120,8 @@ function createContextMenu() {
     browser.contextMenus.create({
       id: MENU_ID_SAVE,
       title: menuTitle(options.menuAccessKey),
-      contexts: ["image"]
+      contexts: ["image"],
+      targetUrlPatterns: IMAGE_URL_PATTERNS
     });
   });
 
@@ -140,6 +164,7 @@ async function saveImage(info, tab, options) {
       fallbackOptions,
       {
         tabId: options.closeTab && typeof tab?.id === "number" ? tab.id : null,
+        sourceTabId: typeof tab?.id === "number" ? tab.id : null,
         objectUrl: downloadSource.url.startsWith("blob:") ? downloadSource.url : null
       }
     );
@@ -149,6 +174,51 @@ async function saveImage(info, tab, options) {
   }
 
   return true;
+}
+
+function setDownloadFeedback(tabId, text = "", message = "", color = "#4b5563") {
+  if (!Number.isInteger(tabId) || tabId < 0) {
+    return Promise.resolve();
+  }
+
+  feedbackUpdates = feedbackUpdates.then(async () => {
+    if (text) {
+      await browser.action.setBadgeBackgroundColor({ tabId, color });
+      await browser.action.setBadgeTextColor({ tabId, color: "#ffffff" });
+    }
+    await browser.action.setTitle({ tabId, title: message ? `${message}\n${ACTION_TITLE}` : ACTION_TITLE });
+    await browser.action.setBadgeText({ tabId, text });
+  }).catch(() => {
+    // A closed tab or unavailable toolbar must not affect download handling.
+  });
+  return feedbackUpdates;
+}
+
+function showDownloadError(tabId, error) {
+  const reason = error === "DOWNLOAD_REMOVED" ? error : DownloadUtils.interruptReason(error);
+  if (reason === "USER_CANCELED" || reason === "DOWNLOAD_REMOVED") {
+    return setDownloadFeedback(tabId, "–", reason === "USER_CANCELED"
+      ? "Image download cancelled."
+      : "Image download removed from history before completion.");
+  }
+
+  console.error("Could not save image.");
+  const messages = {
+    SERVER_FORBIDDEN: "The image server refused the download.",
+    SERVER_UNAUTHORIZED: "The image server requires authentication.",
+    SERVER_BAD_CONTENT: "The image server returned an error or invalid content.",
+    NETWORK_TIMEOUT: "The image download timed out.",
+    FILE_NO_SPACE: "Not enough disk space to save the image.",
+    FILE_ACCESS_DENIED: "Firefox could not write to the download folder.",
+    FILE_NAME_TOO_LONG: "The download filename is too long.",
+    FILE_BLOCKED: "Firefox blocked the image download.",
+    FILE_VIRUS_INFECTED: "Firefox blocked the image download.",
+    FILE_SECURITY_CHECK_FAILED: "Firefox blocked the image download."
+  };
+  const message = messages[reason] || (reason.startsWith("NETWORK_")
+    ? "The image download failed because of a network error."
+    : "The image could not be saved.");
+  return setDownloadFeedback(tabId, "!", message, "#b42338");
 }
 
 function buildDownloadOptions(srcUrl, filename, info, tab, options, sendReferer) {
