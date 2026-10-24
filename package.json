@@ -1,15 +1,16 @@
 {
   "name": "one-click-image-save",
   "private": true,
-  "packageManager": "pnpm@11.10.0",
+  "packageManager": "pnpm@12.15.0",
   "description": "Firefox extension to save images with one click into your downloads directory or a subfolder.",
   "scripts": {
     "test": "node --test",
     "start": "web-ext run --source-dir .",
+    "start:test-website": "node test-website/serve.mjs",
     "lint": "web-ext lint --source-dir .",
-    "build": "web-ext build --source-dir . --overwrite-dest --ignore-files media media/**/* test test/**/* package.json pnpm-lock.yaml pnpm-workspace.yaml README.md"
+    "build": "web-ext build --source-dir . --overwrite-dest --ignore-files media media/**/* test test/**/* test-website test-website/**/* package.json pnpm-lock.yaml pnpm-workspace.yaml README.md"
   },
   "devDependencies": {
-    "web-ext": "^10.7.0"
+    "web-ext": "^10.8.0"
   }
 }

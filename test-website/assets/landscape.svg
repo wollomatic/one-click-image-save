@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480">
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#14192e"/><stop offset="1" stop-color="#371e48"/></linearGradient></defs>
+  <path fill="url(#sky)" d="M0 0h960v480H0z"/>
+  <g fill="#b6c9e5"><circle cx="105" cy="76" r="2"/><circle cx="284" cy="54" r="2"/><circle cx="816" cy="94" r="3"/><circle cx="750" cy="40" r="2"/><circle cx="412" cy="103" r="2"/></g>
+  <circle cx="650" cy="205" r="99" fill="#ff3daf"/>
+  <path d="M540 185h220m-220 20h220m-220 20h220m-220 20h220m-220 20h220m-220 20h220" stroke="#251a39" stroke-width="7"/>
+  <path d="m0 355 166-184 188 203 153-123 171 133 130-111 152 90v117H0" fill="#0b1428" stroke="#637291" stroke-width="2"/>
+  <path d="m0 408 262-140 210 158 192-104 296 104v54H0" fill="#101c31" stroke="#32f6ff" stroke-width="3"/>
+  <path d="M0 438h960M0 458h960m-480-32-120 54m120-54 120 54m-120-54-360 54m360-54 360 54" stroke="#32f6ff" stroke-opacity=".28"/>
+  <text x="38" y="453" fill="#d7e9ff" font-family="monospace" font-size="16" letter-spacing="2">SVG / VECTOR SOURCE</text>
+</svg>

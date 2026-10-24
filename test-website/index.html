@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A local image test bench for the One Click Image Save Firefox add-on.">
+  <title>Image test bench · One Click Image Save</title>
+  <link rel="icon" href="assets/addon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#test-cases">Skip to test cases</a>
+  <div class="page-shell">
+    <header class="masthead">
+      <a class="brand" href="./" aria-label="One Click Image Save test bench home">
+        <img src="assets/addon.svg" alt="" width="40" height="40">
+        <span>One Click <strong>Image Save</strong></span>
+      </a>
+      <span class="environment">TEST PAGE</span>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <h1 id="page-title">Image download <span>tests</span></h1>
+      </section>
+
+      <aside class="notice" id="protocol-notice" hidden>
+        <strong>Serve this folder over HTTP.</strong> File URLs are rejected by the add-on. From the repository root, run <code>pnpm run start:test-website</code>, then open <a href="http://127.0.0.1:8080">http://127.0.0.1:8080</a>.
+      </aside>
+
+      <section class="bench" aria-labelledby="bench-title">
+        <h2 id="bench-title" class="bench-title">Test cases<span id="total-count" class="count"></span></h2>
+        <div class="toolbar">
+          <div class="filters" role="group" aria-label="Filter test cases by category">
+            <button type="button" data-filter="all" aria-pressed="true">All cases</button>
+            <button type="button" data-filter="formats" aria-pressed="false">File formats</button>
+            <button type="button" data-filter="embedding" aria-pressed="false">Embedding</button>
+            <button type="button" data-filter="data" aria-pressed="false">Data URLs</button>
+            <button type="button" data-filter="filenames" aria-pressed="false">Filenames</button>
+            <button type="button" data-filter="boundaries" aria-pressed="false">Boundaries</button>
+          </div>
+        </div>
+        <p class="collection-note"><span class="legend"><i></i> Expected download</span><span class="legend limited"><i></i> Unsupported / error case</span><span id="visible-count" aria-live="polite"></span></p>
+        <div class="test-grid" id="test-cases"></div>
+        <p class="empty-state" id="empty-state" hidden>No matching cases.</p>
+        <noscript><p class="notice">JavaScript is required to display the test cases. <a href="assets/landscape.png">Open the PNG fixture</a>.</p></noscript>
+      </section>
+
+    </main>
+    <footer><span>One Click Image Save</span><a href="#page-title">Back to top ↑</a></footer>
+  </div>
+</body>
+</html>

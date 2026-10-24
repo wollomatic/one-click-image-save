@@ -17,17 +17,31 @@ class FixedDate extends Date {
 
 async function loadBackground(options = {}) {
   const downloadCalls = [];
+  const session = {};
+  const closedTabs = [];
   const listeners = {};
   const browser = {
     runtime: {
       onInstalled: { addListener() {} },
       onStartup: { addListener() {} }
     },
-    action: { onClicked: { addListener() {} } },
+    action: {
+      onClicked: { addListener() {} },
+      async setBadgeText() {},
+      async setBadgeBackgroundColor() {},
+      async setBadgeTextColor() {},
+      async setTitle() {}
+    },
     storage: {
       local: { async get(defaults) { return { ...defaults, ...options }; } },
+      session: {
+        async get() { return { ...session }; },
+        async set(values) { Object.assign(session, values); },
+        async remove(key) { delete session[key]; }
+      },
       onChanged: { addListener() {} }
     },
+    tabs: { async remove(id) { closedTabs.push(id); } },
     contextMenus: {
       async remove() {},
       create() {},
@@ -56,7 +70,8 @@ async function loadBackground(options = {}) {
 
   vm.runInContext(backgroundSource, context);
   await vm.runInContext("menuSetup", context);
-  return { context, downloadCalls, listeners };
+  await vm.runInContext("downloadManager.ready", context);
+  return { context, downloadCalls, listeners, closedTabs, session };
 }
 
 test("CDN suffixes are removed from filenames without changing signed download URLs", async () => {
@@ -141,7 +156,7 @@ test("normal filenames and format parameters retain their existing behavior", as
     ["https://example.com/photo.png:large?format=webp", "photo.webp"],
     ["https://example.com/photo.png:large?format=auto", "photo.png"],
     ["http://example.com/photo.jpg", "photo.jpg"],
-    ["https://example.com/image", "image.jpg"],
+    ["https://example.com/image", "image"],
     ["https://example.com/bad%ZZ.jpg", "bad%ZZ.jpg"]
   ];
   for (const [url, expected] of cases) {
@@ -155,4 +170,41 @@ test("normal filenames and format parameters retain their existing behavior", as
   assert.equal(downloadCalls[0].url, ordinaryUrl);
   assert.equal(Object.hasOwn(downloadCalls[0], "filename"), false);
   assert.equal(context.sanitizeFilename("short-\u00e4-\u{1f431}.png"), "short-\u00e4-\u{1f431}.png");
+});
+
+test("Windows device names are safe with default folders, prefixes and direct downloads", async () => {
+  for (const options of [{}, { targetFolder: "" }, { targetFolder: "AUX/COM1", prefixTimestamp: true }]) {
+    const { downloadCalls, listeners } = await loadBackground(options);
+    await listeners.clicked({
+      menuItemId: "one-click-image-save", srcUrl: "https://example.com/AUX.png"
+    }, { id: 1 });
+    const filename = downloadCalls[0].filename;
+    assert.ok(filename.endsWith("_AUX.png"));
+    assert.equal(filename.split("/").some((part) => /^(?:AUX|COM1)(?:\.|$)/i.test(part)), false);
+  }
+});
+
+test("unknown HTTP formats use neutral names while explicit image extensions are preserved", async () => {
+  const { context, downloadCalls, listeners } = await loadBackground();
+  for (const [path, name] of [
+    ["noext", "noext"], ["image.php", "image_php"], ["image.exe", "image_exe"],
+    ["photo.v2.php", "photo_v2_php"], ["photo.png", "photo.png"]
+  ]) {
+    await listeners.clicked({
+      menuItemId: "one-click-image-save", srcUrl: "https://example.com/" + path
+    }, { id: 1 });
+    assert.equal(downloadCalls.at(-1).filename, "Saved Images/" + name);
+  }
+  assert.equal(context.sanitizeFilename("..."), "image-" + TIMESTAMP);
+});
+
+test("source tabs close only for successfully completed downloads when enabled", async () => {
+  for (const closeTab of [false, true]) {
+    const page = await loadBackground({ closeTab });
+    await page.listeners.clicked({
+      menuItemId: "one-click-image-save", srcUrl: "https://example.com/photo.png"
+    }, { id: 42 });
+    assert.deepEqual(page.closedTabs, closeTab ? [42] : []);
+    assert.deepEqual(page.session, {});
+  }
 });
