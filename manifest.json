@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "One Click Image Save",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Save images from the context menu into your downloads directory or a subfolder.",
   "permissions": [
     "contextMenus",
