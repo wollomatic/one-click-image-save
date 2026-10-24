@@ -6,8 +6,9 @@
   "scripts": {
     "test": "node --test",
     "start": "web-ext run --source-dir .",
+    "start:test-website": "node test-website/serve.mjs",
     "lint": "web-ext lint --source-dir .",
-    "build": "web-ext build --source-dir . --overwrite-dest --ignore-files media media/**/* test test/**/* package.json pnpm-lock.yaml pnpm-workspace.yaml README.md"
+    "build": "web-ext build --source-dir . --overwrite-dest --ignore-files media media/**/* test test/**/* test-website test-website/**/* package.json pnpm-lock.yaml pnpm-workspace.yaml README.md"
   },
   "devDependencies": {
     "web-ext": "^10.8.0"

@@ -140,6 +140,11 @@ Or load manually:
 3. Click **Load Temporary Add-on**
 4. Select `manifest.json`
 
+For a local image download test collection, run `pnpm run start:test-website` and open
+http://127.0.0.1:8080 in Firefox. The [test website](test-website/README.md) includes
+different image formats and embedding methods, expected add-on behavior, and manual
+result tracking. The collection is excluded from packaged extension builds.
+
 ## Package
 
 ```bash
