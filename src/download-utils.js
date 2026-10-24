@@ -98,115 +98,125 @@
     return RETRYABLE_REFERER_ERRORS.has(reason);
   }
 
-  async function runDownload(downloadsApi, options) {
-    try {
-      const id = await downloadsApi.download(options);
-      return await waitForDownload(downloadsApi, id);
-    } catch (error) {
-      return {
-        success: false,
-        id: null,
-        error: interruptReason(error)
-      };
+  function createDownloadManager(downloadsApi, sessionStorage, {
+    onComplete = () => {},
+    onError = () => {},
+    revokeObjectURL = (url) => globalScope.URL.revokeObjectURL(url)
+  } = {}) {
+    const keyPrefix = "pendingDownload:";
+    const records = new Map();
+    let work = Promise.resolve();
+
+    function enqueue(action) {
+      const task = work.then(action);
+      // A failed API call must not prevent later download events from running.
+      work = task.catch(() => undefined);
+      return task;
     }
-  }
 
-  function waitForDownload(downloadsApi, id) {
-    return new Promise((resolve) => {
-      let settled = false;
-      let lastError = null;
+    async function forget(id) {
+      await sessionStorage.remove(keyPrefix + id);
+      records.delete(id);
+    }
 
-      const finish = (result) => {
-        if (settled) {
-          return;
+    async function finish(id, success) {
+      const record = records.get(id);
+      if (!record) {
+        return;
+      }
+      await forget(id);
+      if (record.objectUrl) {
+        revokeObjectURL(record.objectUrl);
+      }
+      if (success) {
+        await onComplete(record);
+      } else {
+        onError();
+      }
+    }
+
+    async function launch(options, record, previousId = null) {
+      let id;
+      try {
+        id = await downloadsApi.download(options);
+      } catch (error) {
+        if (record.fallbackOptions && isRetryableRefererError(interruptReason(error))) {
+          return launch(record.fallbackOptions, { ...record, fallbackOptions: null }, previousId);
         }
+        throw error;
+      }
 
-        settled = true;
-        downloadsApi.onChanged.removeListener(handleChanged);
-        downloadsApi.onErased.removeListener(handleErased);
-        resolve({ ...result, id });
-      };
+      try {
+        await sessionStorage.set({ [keyPrefix + id]: record });
+      } catch (error) {
+        await downloadsApi.cancel(id).catch(() => undefined);
+        throw error;
+      }
+      records.set(id, record);
+      if (previousId !== null) {
+        await forget(previousId);
+        await downloadsApi.erase({ id: previousId }).catch(() => undefined);
+      }
+      // Downloads can finish before download() resolves or before state is saved.
+      await reconcile(id).catch(onError);
+      return id;
+    }
 
-      const finishInterrupted = async () => {
-        try {
-          const [item] = await downloadsApi.search({ id });
-          finish({
-            success: false,
-            error: item ? item.error || lastError || "UNKNOWN" : "UNKNOWN"
-          });
-        } catch {
-          finish({
-            success: false,
-            error: lastError || "UNKNOWN"
-          });
+    async function reconcile(id) {
+      const record = records.get(id);
+      if (!record) {
+        return;
+      }
+      const [item] = await downloadsApi.search({ id });
+      if (!item) {
+        await finish(id, false);
+      } else if (item.state === "complete") {
+        await finish(id, true);
+      } else if (item.state === "interrupted" && !item.paused) {
+        if (record.fallbackOptions && isRetryableRefererError(item.error)) {
+          try {
+            await launch(record.fallbackOptions, { ...record, fallbackOptions: null }, id);
+          } catch {
+            await finish(id, false);
+          }
+        } else {
+          await finish(id, false);
         }
-      };
+      }
+    }
 
-      const handleChanged = (delta) => {
-        if (delta.id !== id || settled) {
-          return;
-        }
+    // Install listeners before any storage read, so Firefox can wake this page.
+    downloadsApi.onChanged.addListener((delta) => enqueue(() => {
+      if (delta.state?.current === "complete") {
+        return finish(delta.id, true);
+      }
+      return reconcile(delta.id);
+    }).catch(onError));
+    downloadsApi.onErased.addListener((id) => enqueue(() => finish(id, false)).catch(onError));
 
-        if (delta.error?.current) {
-          lastError = delta.error.current;
+    const ready = enqueue(async () => {
+      const saved = await sessionStorage.get(null);
+      for (const [key, record] of Object.entries(saved)) {
+        if (key.startsWith(keyPrefix)) {
+          records.set(Number(key.slice(keyPrefix.length)), record);
         }
-
-        if (delta.state?.current === "complete") {
-          finish({ success: true, error: null });
-        } else if (delta.state?.current === "interrupted") {
-          finishInterrupted();
-        }
-      };
-
-      const handleErased = (erasedId) => {
-        if (erasedId === id) {
-          finish({ success: false, error: "UNKNOWN" });
-        }
-      };
-
-      downloadsApi.onChanged.addListener(handleChanged);
-      downloadsApi.onErased.addListener(handleErased);
-
-      downloadsApi.search({ id }).then(([item]) => {
-        if (settled) {
-          return;
-        }
-        if (!item) {
-          finish({ success: false, error: "UNKNOWN" });
-        } else if (item.state === "complete") {
-          finish({ success: true, error: null });
-        } else if (item.state === "interrupted") {
-          lastError = item.error || lastError;
-          finishInterrupted();
-        }
-      }).catch(() => {
-        finish({ success: false, error: "UNKNOWN" });
-      });
+      }
+      for (const id of [...records.keys()]) {
+        await reconcile(id).catch(onError);
+      }
     });
-  }
+    ready.catch(onError);
 
-  async function downloadWithRefererFallback(downloadsApi, primaryOptions, fallbackOptions) {
-    const firstAttempt = await runDownload(downloadsApi, primaryOptions);
-
-    if (
-      firstAttempt.success ||
-      !fallbackOptions ||
-      !isRetryableRefererError(firstAttempt.error)
-    ) {
-      return firstAttempt;
-    }
-
-    const fallbackAttempt = await runDownload(downloadsApi, fallbackOptions);
-
-    if (firstAttempt.id !== null && fallbackAttempt.id !== null) {
-      await downloadsApi.erase({ id: firstAttempt.id }).catch(() => undefined);
-    }
-
-    return fallbackAttempt;
+    return {
+      ready,
+      start(primaryOptions, fallbackOptions, { tabId = null, objectUrl = null } = {}) {
+        return enqueue(() => launch(primaryOptions, { tabId, objectUrl, fallbackOptions }));
+      }
+    };
   }
 
   const downloadUtils = {
-    downloadWithRefererFallback,
+    createDownloadManager,
     interruptReason,
     isRetryableRefererError,
     normalizeRefererMode,

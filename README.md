@@ -38,6 +38,10 @@ One Click Image Save supports desktop Firefox 140 and newer.
 
 Open the extension options page from the toolbar button or Firefox's add-ons manager to change the target folder, filename behaviour, conflict handling, and saved settings. Leave the target folder empty to save directly to Firefox's downloads directory. Backslashes are converted to forward slashes because Firefox expects download paths as relative paths such as `Saved Images/example.jpg`. Firefox does not allow a folder component to start or end with a dot, so these dots are removed automatically.
 
+Reserved Windows device names such as `AUX.png` are prefixed with an underscore. When an image URL does not identify a supported image format, custom filenames remain extensionless rather than assuming JPEG.
+
+Pending download metadata is kept in Firefox's in-memory session storage so completion handling and referrer retries survive background-page suspension. This metadata is removed when a download finishes, fails, or is removed from the download history, and is cleared when the browser session ends. Paused downloads remain pending until resumed or cancelled. Saved options continue to use local storage separately.
+
 ## Limitations
 
 Due to Firefox extension restrictions, downloads can only be saved within Firefox's configured download directory.
@@ -50,6 +54,13 @@ To keep permissions to a minimum, the extension does not request access to cooki
 Firefox for Android is not supported.
 
 ## Changelog
+
+#### Unreleased
+
+* Restore pending download handling after background-page suspension, including tab closing and referrer retries.
+* Keep paused downloads pending and release temporary image URLs only after completion, cancellation, or history removal.
+* Sanitize Windows device names in filenames and target folders.
+* Use neutral filenames for unknown HTTP image formats instead of assuming JPEG.
 
 #### 1.1.2
 

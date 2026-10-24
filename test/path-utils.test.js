@@ -45,3 +45,14 @@ test("sanitizeFolderPathComponent removes leading and trailing dots", () => {
   assert.equal(sanitizeFolderPathComponent("visible."), "visible");
   assert.equal(sanitizeFolderPathComponent("foo..bar"), "foo..bar");
 });
+
+test("Windows device names are prefixed without changing extensions or ordinary names", () => {
+  for (const name of ["AUX", "con.png", "PRN.jpg", "nul.webp", "COM1", "lpt9.gif", "COM\u00b9.png", "CONIN$", "conout$.png", "CON .png"]) {
+    assert.equal(sanitizeFolderPathComponent(name), "_" + name);
+  }
+  for (const name of ["auxiliary.png", "console", "COM10.png", "LPT0", "example.com"]) {
+    assert.equal(sanitizeFolderPathComponent(name), name);
+  }
+  assert.equal(sanitizeFolderPath("AUX/CON.png"), "_AUX/_CON.png");
+  assert.equal(sanitizeFolderPathComponent(" . . "), "");
+});

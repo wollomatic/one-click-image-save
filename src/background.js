@@ -33,6 +33,20 @@ const IMAGE_EXTENSIONS = new Set([
   "tiff"
 ]);
 let menuSetup = Promise.resolve();
+// Register download listeners during script evaluation so Firefox can wake this
+// event page after suspension. Only temporary download state goes into session.
+const downloadManager = DownloadUtils.createDownloadManager(
+  browser.downloads,
+  browser.storage.session,
+  {
+    onComplete: async ({ tabId }) => {
+      if (typeof tabId === "number") {
+        await closeTab(tabId);
+      }
+    },
+    onError: () => console.error("Could not save image.")
+  }
+);
 
 browser.runtime.onInstalled.addListener(() => {
   initialize().catch((error) => {
@@ -64,11 +78,7 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
 
   try {
     const options = await getOptions();
-    const saved = await saveImage(info, tab, options);
-
-    if (saved && options.closeTab && typeof tab?.id === "number") {
-      await closeTab(tab.id);
-    }
+    await saveImage(info, tab, options);
   } catch {
     console.error("Could not save image.");
   }
@@ -101,7 +111,8 @@ async function saveImage(info, tab, options) {
     throw new Error("Unsupported image URL scheme.");
   }
 
-  const filename = DownloadUtils.shouldUseBrowserFilename(srcUrl, options) && !hasImageSizeSuffix(srcUrl)
+  const filename = DownloadUtils.shouldUseBrowserFilename(srcUrl, options) &&
+    !hasImageSizeSuffix(srcUrl) && !PathUtils.isWindowsDeviceName(imagePathFilename(new URL(srcUrl)))
     ? undefined
     : buildDownloadFilename(srcUrl, info, options);
 
@@ -110,7 +121,6 @@ async function saveImage(info, tab, options) {
   }
 
   const downloadSource = await DownloadUtils.prepareDownloadUrl(srcUrl);
-  let result;
 
   try {
     const primaryOptions = buildDownloadOptions(
@@ -125,17 +135,17 @@ async function saveImage(info, tab, options) {
       ? buildDownloadOptions(downloadSource.url, filename, info, tab, options, true)
       : null;
     const fallbackOptions = fallbackCandidate?.headers ? fallbackCandidate : null;
-    result = await DownloadUtils.downloadWithRefererFallback(
-      browser.downloads,
+    await downloadManager.start(
       primaryOptions,
-      fallbackOptions
+      fallbackOptions,
+      {
+        tabId: options.closeTab && typeof tab?.id === "number" ? tab.id : null,
+        objectUrl: downloadSource.url.startsWith("blob:") ? downloadSource.url : null
+      }
     );
-  } finally {
+  } catch (error) {
     downloadSource.revoke();
-  }
-
-  if (!result.success) {
-    throw new Error("Download failed.");
+    throw error;
   }
 
   return true;
@@ -307,9 +317,11 @@ function getOriginalFilename(srcUrl) {
       return candidate;
     }
 
-    return `${candidate}.jpg`;
+    // A URL alone cannot identify the response MIME type. Keep unknown formats
+    // extensionless instead of labelling PNG/WebP/etc. bytes as JPEG.
+    return candidate.replace(/\./g, "_");
   } catch {
-    return `image-${timestamp()}.jpg`;
+    return `image-${timestamp()}`;
   }
 }
 
@@ -382,18 +394,14 @@ function sanitizeFilename(filename) {
   const clean = cleanPathComponent(filename);
 
   if (!clean) {
-    return `image-${timestamp()}.jpg`;
+    return `image-${timestamp()}`;
   }
 
   return truncateFilename(clean, 180);
 }
 
 function cleanPathComponent(value) {
-  return String(value ?? "")
-    .replace(/[\\/:*?"<>|]/g, "_")
-    .replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g, "")
-    .replace(/\s+/g, " ")
-    .replace(/^[.\s]+|[.\s]+$/g, "");
+  return PathUtils.sanitizeFolderPathComponent(value);
 }
 
 function truncateFilename(filename, maxBytes) {
